@@ -1,9 +1,8 @@
 import DashParser from './dash/DashParser.js';
 
 class Yoda {
-
-    constructor (manifest) {
-        this._manifest = manifest;
+    constructor () {
+        this.manifest = null;
     }
 
     loadManifest (url) {
@@ -13,8 +12,7 @@ class Yoda {
 
         onload = function () {
             if (request.status === 200) {
-                this._manifest = request.responseText;
-                console.log("onload: " + this._manifest);
+                this.manifest = request.responseText;
             }
         };
 
@@ -25,7 +23,7 @@ class Yoda {
         console.log("Loading manifest...");
 
         try {
-            request.onload = onload;
+            request.onload = onload.bind(this);
             request.onerror = onerror;
 
             request.open("GET", url, true);
@@ -37,8 +35,7 @@ class Yoda {
     }
 
     getManifest() {
-        console.log("getManifest: " + this._manifest);
-        return this._manifest;
+        return this.manifest;
     }
 }
 

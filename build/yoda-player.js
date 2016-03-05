@@ -16,7 +16,7 @@ console.log("Creating the player...");
 player.loadManifest(mpdUrl);
 
 setTimeout(function () {
-    var mpd = player.manifest;
+    var mpd = player.getManifest();
     console.log(mpd);
 }, 2000);
 
@@ -52,10 +52,10 @@ function _classCallCheck(instance, Constructor) {
 }
 
 var Yoda = function () {
-    function Yoda(manifest) {
+    function Yoda() {
         _classCallCheck(this, Yoda);
 
-        this._manifest = manifest;
+        this.manifest = null;
     }
 
     _createClass(Yoda, [{
@@ -67,8 +67,7 @@ var Yoda = function () {
 
             onload = function onload() {
                 if (request.status === 200) {
-                    this._manifest = request.responseText;
-                    console.log("onload: " + this._manifest);
+                    this.manifest = request.responseText;
                 }
             };
 
@@ -79,7 +78,7 @@ var Yoda = function () {
             console.log("Loading manifest...");
 
             try {
-                request.onload = onload;
+                request.onload = onload.bind(this);
                 request.onerror = onerror;
 
                 request.open("GET", url, true);
@@ -92,8 +91,7 @@ var Yoda = function () {
     }, {
         key: "getManifest",
         value: function getManifest() {
-            console.log("getManifest: " + this._manifest);
-            return this._manifest;
+            return this.manifest;
         }
     }]);
 
