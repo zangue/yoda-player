@@ -18,7 +18,7 @@ class Yoda {
 
         onerror = function () {
             console.error("Could not load manifest.");
-        }
+        };
 
         console.log("Loading manifest...");
 
