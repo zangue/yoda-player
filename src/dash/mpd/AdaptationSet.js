@@ -19,16 +19,16 @@ class AdaptationSet {
         this.bitStreamSwitching = null;
         this.subsegmentAlignment = false;
         this.subsegmentStartsWithSAP = 0;
-        this.Accessibility = [];
-        this.role = [];
-        this.rating = [];
-        this.viewpoint = [];
-        this.contentComponent = [];
-        this.baseUrl = [];
+        this.accessibilities = [];
+        this.roles = [];
+        this.ratings = [];
+        this.viewpoints = [];
+        this.contentComponents = [];
+        this.baseUrls = [];
         this.segmentBase = null;
         this.segmentList = null;
         this.segmentTemplate = null;
-        this.representation = [];
+        this.representations = [];
     }
 }
 

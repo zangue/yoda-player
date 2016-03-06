@@ -4,10 +4,10 @@ class ContentComponent {
         this.lang = null;
         this.contentType = null;
         this.par = null;
-        this.accessibility = [];
-        this.role = [];
-        this.rating = [];
-        this.viewpoint = [];
+        this.accessibilities = [];
+        this.roles = [];
+        this.ratings = [];
+        this.viewpoints = [];
     }
 }
 

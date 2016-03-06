@@ -2,7 +2,7 @@ class MPD {
     constructor () {
         this.id = null;
         this.profiles = null;
-        this.type = "static";
+        this.type = null;
         this.availabilityStartTime = null; // Must be present for @type='dynamic'
         this.publishTime = null; // Must be present for @type='dynamic'
         this.availabilityEndTime = null;
@@ -14,10 +14,10 @@ class MPD {
         this.maxSegmentDuration = null;
         this.maxSubSegmentDuration = null;
         this.programInformation = [];
-        this.baseUrl = [];
-        this.Location = [];
-        this.Period = [];
-        this.Metrics = [];
+        this.baseUrls = [];
+        this.locations = [];
+        this.periods = [];
+        this.metrics = [];
     }
 }
 
