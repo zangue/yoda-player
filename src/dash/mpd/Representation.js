@@ -5,6 +5,7 @@ class Representation {
         this.qualityRanking = null;
         this.dependencyId = null;
         this.mediaStreamStructureId = null;
+        this.common = null;
         this.baseUrls = [];
         this.subRepresentations = [];
         this.segmentBase = null;

@@ -4,6 +4,7 @@ class AdaptationSet {
         this.xlinkActuate = null;
         this.id = null;
         this.group = null;
+        this.common = null;
         this.lang = null;
         this.contentType = null;
         this.par = null;
