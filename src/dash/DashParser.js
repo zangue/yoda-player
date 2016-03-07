@@ -2,24 +2,63 @@ import MPD from "./mpd/MPD.js";
 import Period from "./mpd/Period.js";
 import AdaptationSet from "./mpd/AdaptationSet.js";
 import Representation from "./mpd/Representation.js";
+import MpdCommon from "./mpd/MpdCommon.js"; // common attributes and elements
 
 class DashParser {
+    /**
+     * Notes:
+     * - parse simple children first (e.g Representation -> segmentTemplate/ segmentList)
+     * - then parse hierarchical children
+     * - use tag name to differentiate
+     */
 
     parseAttribute (node, attr) {
         return node.getAttribute(attr);
     }
 
-    parseRepresentation (node) {
+    parseCommon(node) {
+        let common = new MpdCommon();
 
+        common.profiles = this.parseAttribute(node, "profiles");
+        common.width = this.parseAttribute(node, "width");
+        common.height = this.parseAttribute(node, "height");
+        common.sar = this.parseAttribute(node, "sar");
+        common.frameRate = this.parseAttribute(node, "frameRate");
+        common.audioSamplingRate = this.parseAttribute(node, "audioSamplingRate");
+        common.mimeType = this.parseAttribute(node, "mimeType");
+        common.segmentProfiles = this.parseAttribute(node, "segmentProfiles");
+        common.codecs = this.parseAttribute(node, "codecs");
+        common.maximumSAPPeriod = this.parseAttribute(node, "maximumSAPPeriod");
+        common.startWithSAP = this.parseAttribute(node, "startWithSAP");
+        common.maxPlayoutRate = this.parseAttribute(node, "maxPlayoutRate");
+        common.codingDependency  = this.parseAttribute(node, "codingDependency");
+        common.scanType = this.parseAttribute(node, "scanType");
+
+        return common;
+    }
+
+    parseRepresentation (node) {
+        let representation = new Representation();
+
+        representation.id = this.parseAttribute(node, "id");
+        representation.bandwidth = this.parseAttribute(node, "bandwidth");
+        representation.qualityRanking = this.parseAttribute(node, "qualityRanking");
+        representation.dependencyId = this.parseAttribute(node, "dependencyId");
+        representation.mediaStreamStructureId = this.parseAttribute(node, "mediaStreamStructureId");
+        representation.common = this.parseCommon(node);
+
+        return representation;
     }
 
     parseAdaptationSet (node) {
-        let as = new AdaptationSet();
+        let as = new AdaptationSet(),
+            reps;
 
         as.xlinkHref = this.parseAttribute(node, "xlink:href");
         as.xlinkActuate = this.parseAttribute(node, "xlink:actuate");
         as.id = this.parseAttribute(node, "id");
         as.group = this.parseAttribute(node, "group");
+        as.common = this.parseCommon(node);
         as.lang = this.parseAttribute(node, "lang");
         as.contentType = this.parseAttribute(node, "contentType");
         as.par = this.parseAttribute(node, "par");
@@ -35,6 +74,14 @@ class DashParser {
         as.bitStreamSwitching = this.parseAttribute(node, "bitStreamSwitching");
         as.subsegmentAlignment = this.parseAttribute(node, "subsegmentAlignment");
         as.subsegmentStartsWithSAP = this.parseAttribute(node, "subsegmentStartsWithSAP");
+
+        reps = node.children;
+        console.log("reps:");
+        console.dir(reps);
+        for (let i = 0; i < reps.length; i++) {
+            // use tag name to identify children. Not all of them are reps!
+            as.representations[i] = this.parseRepresentation(reps[i]);
+        }
 
         return as;
     }
@@ -80,9 +127,9 @@ class DashParser {
         periods = node.children;
 
         for (let i = 0; i < periods.length; i++) {
-            //console.log(periods[i]);
             mpd.periods[i] = this.parsePeriod(periods[i]);
         }
+
         console.dir(mpd);
 
         return mpd;
@@ -102,7 +149,6 @@ class DashParser {
         console.log("Parsing MPD...");
 
         mpdNode = xml.getElementsByTagName("MPD")[0];
-
         mpdObj = this.parseMPD(mpdNode);
 
         return mpdObj;
