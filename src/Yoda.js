@@ -32,6 +32,8 @@ class Yoda {
         } catch (e) {
             request.onerror();
         }
+
+        console.log("Loading manifest... DONE.");
     }
 
     getManifest() {
