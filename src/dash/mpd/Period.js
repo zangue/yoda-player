@@ -13,7 +13,7 @@ class Period {
         this.assetIdentifier = null;
         this.eventStreams = [];
         this.adaptationSets = [];
-        this.subSets = [];
+        this.subsets = [];
     }
 }
 
