@@ -4,5 +4,8 @@ class BaseUrl {
         this.byteRange = null;
         this.availabilityTimeOffset = null;
         this.availabilityTimeComplete = null;
+        this.url = null;
     }
 }
+
+export default BaseUrl;
