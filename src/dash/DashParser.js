@@ -6,7 +6,10 @@ import MpdCommon from "./mpd/MpdCommon.js"; // common attributes and elements
 import BaseUrl from "./mpd/BaseUrl.js";
 import Initialization from "./mpd/Initialization.js";
 import RepresentationIndex from "./mpd/RepresentationIndex.js";
-import SegmentBase from "./mpd/SegmentBase.js";
+import Segment from "./mpd/Segment.js";
+//import SegmentBase from "./mpd/SegmentBase.js";
+//import SegmentUrl from "./mpd/SegmentUrl.js";
+//import SegmentList from "./mpd/SegmentList.js";
 
 class DashParser {
 
@@ -90,6 +93,53 @@ class DashParser {
         return repIndex;
     }
 
+    parseSegment (node) {
+        let seg = new Segment(),
+            type = node.tagName;
+
+        //console.log("Parse segment: " + type);
+
+        // Segment Base Information
+        seg.timescale = this.parseAttribute(node, "timescale");
+        seg.presentationTimeOffset = this.parseAttribute(node, "presentationTimeOffset");
+        seg.timeShiftBufferDepth = this.parseAttribute(node, "timeShiftBufferDepth");
+        seg.indexRange = this.parseAttribute(node, "indexRange");
+        seg.indexRangeExact = this.parseAttribute(node, "indexRangeExact");
+        seg.availabilityTimeOffset = this.parseAttribute(node, "availabilityTimeOffset");
+        seg.availabilityTimeComplete = this.parseAttribute(node, "availabilityTimeComplete");
+        seg.initialization = this.parseInitialization(node);
+        seg.representationIndex = this.parseRepresentationIndex(node);
+
+        // Segment Template and URL
+        if (type == "SegmentTemplate" || type == "SegmentURL") {
+            seg.media = this.parseAttribute(node, "media");
+            seg.mediaRange = this.parseAttribute(node, "mediaRange");
+            seg.index = this.parseAttribute(node, "index");
+            seg.indexRange = this.parseAttribute(node, "indexRange");
+        }
+
+        // Segment List information
+        if (type == "SegmentList") {
+            seg.xlinkHref = this.parseAttribute(node, "xlink:href");
+            seg.xlinkActuate = this.parseAttribute(node, "xlink:actuate");
+            seg.segmentUrls = this.parseChildren(node, "SegmentURL", this.parseSegment.bind(this));
+        }
+
+        return seg;
+    }
+
+    parseSegmentURL(node) {
+        let segURL = new SegmentUrl();
+
+        segURL.media = this.parseAttribute(node, "media");
+        segURL.mediaRange = this.parseAttribute(node, "mediaRange");
+        segURL.index = this.parseAttribute(node, "index");
+        segURL.indexRange = this.parseAttribute(node, "indexRange");
+
+        return segURL;
+    }
+
+/*
     parseSegmentBase (node) {
         let segBase = new SegmentBase();
 
@@ -110,14 +160,27 @@ class DashParser {
     parseSegmentList (node) {
         let segList = new SegmentList();
 
+        segList.segmentBaseInfos = this.parseSegmentBase(node);
+        segList.xlinkHref = this.parseAttribute(node, "xlink:href");
+        segList.xlinkActuate = this.parseAttribute(node, "xlink:actuate");
+
+        segList.segmentUrls = this.parseChildren(node, "SegmentURL", this.parseSegmentURL.bind(this));
 
         return segList;
     }
 
     parseSegmentTemplate (node) {
+        let segTpl = new SegmentTemplate();
 
+        segTpl.segmentBaseInfos = this.parseSegmentBase(node);
+        segTpl.media = this.parseAttribute(node, "media");
+        segTpl.mediaRange = this.parseAttribute(node, "mediaRange");
+        segTpl.index = this.parseAttribute(node, "index");
+        segTpl.indexRange = this.parseAttribute(node, "indexRange");
+
+        return segTpl;
     }
-
+*/
     parseLocation (node) {
         return null;
     }
@@ -156,6 +219,8 @@ class DashParser {
         representation.dependencyId = this.parseAttribute(node, "dependencyId");
         representation.mediaStreamStructureId = this.parseAttribute(node, "mediaStreamStructureId");
         representation.common = this.parseCommon(node);
+
+        representation.segmentList = this.parseChildren(node, "SegmentList", this.parseSegment.bind(this));
 
         return representation;
     }
@@ -211,7 +276,9 @@ class DashParser {
         period.subsets = this.parseChildren(node, "Subset", this.parseSubset.bind(this));
 
         // TODO - parse segment{Base,List,Template}
-        this.segmentBase = this.parseSegmentBase(node);
+        //this.segmentBase = this.parseSegmentBase(node);
+        this.segmentList = this.parseChildren(node, "SegmentList", this.parseSegment.bind(this));
+        this.segmentTemplate = this.parseChildren(node, "SegmentTemplate", this.parseSegment.bind(this));
 
         return period;
     }
@@ -246,6 +313,8 @@ class DashParser {
     parse (mpd) {
         let parser = new DOMParser(),
             xml = parser.parseFromString(mpd, "text/xml"),
+            start = new Date(),
+            end,
             mpdNode,
             mpdObj;
 
@@ -259,6 +328,8 @@ class DashParser {
         mpdNode = xml.getElementsByTagName("MPD")[0];
         mpdObj = this.parseMPD(mpdNode);
 
+        end = new Date();
+        console.log("Parsing complete. Total duration: " + (end.getTime() - start.getTime()) + " ms.");
         console.dir(mpdObj);
 
         return mpdObj;
