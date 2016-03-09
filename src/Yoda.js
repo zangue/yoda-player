@@ -1,4 +1,5 @@
-import DashParser from './dash/DashParser.js';
+import DashParser from "./dash/DashParser.js";
+import DashDriver from "./dash/DashDriver.js";
 
 class Yoda {
     constructor () {
