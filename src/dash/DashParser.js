@@ -7,9 +7,6 @@ import BaseUrl from "./mpd/BaseUrl.js";
 import Initialization from "./mpd/Initialization.js";
 import RepresentationIndex from "./mpd/RepresentationIndex.js";
 import Segment from "./mpd/Segment.js";
-//import SegmentBase from "./mpd/SegmentBase.js";
-//import SegmentUrl from "./mpd/SegmentUrl.js";
-//import SegmentList from "./mpd/SegmentList.js";
 
 class DashParser {
 
@@ -139,48 +136,6 @@ class DashParser {
         return segURL;
     }
 
-/*
-    parseSegmentBase (node) {
-        let segBase = new SegmentBase();
-
-        segBase.timescale = this.parseAttribute(node, "timescale");
-        segBase.presentationTimeOffset = this.parseAttribute(node, "presentationTimeOffset");
-        segBase.timeShiftBufferDepth = this.parseAttribute(node, "timeShiftBufferDepth");
-        segBase.indexRange = this.parseAttribute(node, "indexRange");
-        segBase.indexRangeExact = this.parseAttribute(node, "indexRangeExact");
-        segBase.availabilityTimeOffset = this.parseAttribute(node, "availabilityTimeOffset");
-        segBase.availabilityTimeComplete = this.parseAttribute(node, "availabilityTimeComplete");
-
-        segBase.initialization = this.parseInitialization(node);
-        segBase.representationIndex = this.parseRepresentationIndex(node);
-
-        return segBase;
-    }
-
-    parseSegmentList (node) {
-        let segList = new SegmentList();
-
-        segList.segmentBaseInfos = this.parseSegmentBase(node);
-        segList.xlinkHref = this.parseAttribute(node, "xlink:href");
-        segList.xlinkActuate = this.parseAttribute(node, "xlink:actuate");
-
-        segList.segmentUrls = this.parseChildren(node, "SegmentURL", this.parseSegmentURL.bind(this));
-
-        return segList;
-    }
-
-    parseSegmentTemplate (node) {
-        let segTpl = new SegmentTemplate();
-
-        segTpl.segmentBaseInfos = this.parseSegmentBase(node);
-        segTpl.media = this.parseAttribute(node, "media");
-        segTpl.mediaRange = this.parseAttribute(node, "mediaRange");
-        segTpl.index = this.parseAttribute(node, "index");
-        segTpl.indexRange = this.parseAttribute(node, "indexRange");
-
-        return segTpl;
-    }
-*/
     parseLocation (node) {
         return null;
     }
