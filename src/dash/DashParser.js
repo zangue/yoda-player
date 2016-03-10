@@ -125,17 +125,6 @@ class DashParser {
         return seg;
     }
 
-    parseSegmentURL(node) {
-        let segURL = new SegmentUrl();
-
-        segURL.media = this.parseAttribute(node, "media");
-        segURL.mediaRange = this.parseAttribute(node, "mediaRange");
-        segURL.index = this.parseAttribute(node, "index");
-        segURL.indexRange = this.parseAttribute(node, "indexRange");
-
-        return segURL;
-    }
-
     parseLocation (node) {
         return null;
     }
