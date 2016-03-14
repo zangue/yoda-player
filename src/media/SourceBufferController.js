@@ -4,7 +4,7 @@ class SourceBufferController {
         let sourceBuffer;
 
         try {
-            sourceBuffer = mediaSource.addSourceBuffer()
+            sourceBuffer = mediaSource.addSourceBuffer(fullMimeType);
         } catch (e) {
             console.log("Failed to create source buffer: " + e.message);
         }
