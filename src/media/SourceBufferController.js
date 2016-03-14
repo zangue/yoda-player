@@ -12,6 +12,14 @@ class SourceBufferManager {
         return sourceBuffer;
     }
 
+    removeSourceBuffer (mediaSource, sourceBuffer) {
+        try {
+            mediaSource.removeSourceBuffer(sourceBuffer);
+        } catch (e) {
+            console.log("Failed to remove source buffer: " + e.message);
+        }
+    }
+
 }
 
 export default SourceBufferManager;
