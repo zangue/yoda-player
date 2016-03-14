@@ -1,4 +1,4 @@
-class SourceBufferManager {
+class SourceBufferController {
 
     createSourceBuffer (mediaSource, fullMimeType) {
         let sourceBuffer;
@@ -22,4 +22,4 @@ class SourceBufferManager {
 
 }
 
-export default SourceBufferManager;
+export default SourceBufferController;
