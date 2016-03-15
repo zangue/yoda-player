@@ -3,31 +3,27 @@ import MediaInfo from "../media/params/MediaInfo.js";
 class DashDriver {
 
     _getAdaptationForType (type, manifest) {
-        let i, j,
+        let i,
             as,
             asType,
-            periods = manifest.periods[0]; // No support for multi period
+            period = manifest.periods[0]; // No support for multi period
 
-        for (i = 0; i < periods.length; i++) {
-            as = periods[i].adaptationSets;
+        as = period.adaptationSets;
 
-            for (j = 0; i < as.length; i++) {
-                asType = as.common.mimeType.split('/')[0];
+        for (i = 0; i < as.length; i++) {
+            asType = as[i].common.mimeType.split('/')[0];
 
-                if (asType == type) {
-                    return as;
-                }
+            if (asType == type) {
+                return as[i];
             }
         }
     }
 
     getMediaInfoFor (mediaType, manifest) {
-        let mediaInfo = new MediaInfo,
+        let mediaInfo = new MediaInfo(),
             i,
-            as,
+            as = this._getAdaptationForType(mediaType, manifest),
             reps = as.representations;
-
-        as = this._getAdaptationForType(mediaType, manifest);
 
         mediaInfo.id = as.id;
         mediaInfo.mimeType = as.mimeType;
@@ -37,6 +33,8 @@ class DashDriver {
         for (i = 0; i < reps.length; i++) {
             mediaInfo.bitrates.push(parseInt(reps[i].bandwidth));
         }
+
+        return mediaInfo;
     }
 
 
