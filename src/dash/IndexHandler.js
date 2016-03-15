@@ -1,3 +1,5 @@
+import FragmentRequest from "../media/object/FragmentRequest.js";
+
 class IndexHandler {
 
     constructor (type) {
