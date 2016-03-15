@@ -8,9 +8,10 @@ class HTTPRequest {
         this.trequest = null;
         this.tresponse = null;
         this.tresponseCode = null;
-        this.intervall = null;
+        this.interval = null;
         this.traces = [];
         this.headers = null;
+        this.latency = null;
     }
 }
 
