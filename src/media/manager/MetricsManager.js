@@ -1,5 +1,5 @@
-import HTTPRequest from "../metrics/HTTPRequest.js";
-import TCPConnection from "../metrics/TCPConnection.js";
+import HTTPRequest from "../objects/metrics/HTTPRequest.js";
+import TCPConnection from "../objects/metrics/TCPConnection.js";
 
 class MetricsManager {
 

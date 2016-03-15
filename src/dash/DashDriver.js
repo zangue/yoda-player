@@ -1,4 +1,4 @@
-import MediaInfo from "../media/params/MediaInfo.js";
+import MediaInfo from "../media/objects/infos/MediaInfo.js";
 
 class DashDriver {
 
