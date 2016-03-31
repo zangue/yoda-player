@@ -22,7 +22,7 @@ gulp.task('clean', function () {
 
 gulp.task('jshint', function () {
     return gulp.src('./src/**/*.js')
-        .pipe(jshint())
+        .pipe(jshint({esversion: 6}))
         .pipe(jshint.reporter('jshint-stylish'));
 });
 
