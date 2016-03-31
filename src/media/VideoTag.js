@@ -1,3 +1,5 @@
+import EventBus from "../lib/EventBus.js";
+import Events from "Events.js";
 
 /**
  * HTML5 Video Element handler
@@ -10,15 +12,16 @@ class VideoTag {
     constructor (id) {
         this._video = document.querySelector(id);
 
-        this._mediaEvents = new Array();
-        this._mediaEvents["play"] = this.onPlay;
-        this._mediaEvents["pause"] = this.onPause;
-        this._mediaEvents["seeking"] = this.onSeeking;
-        this._mediaEvents["stalled"] = this.onStalled;
+        this._mediaEvents = {
+            "play": this.onPlay,
+            "pause": this.onPause,
+            "seeking": this.onSeeking,
+            "stalled": this.onStalled
+        };
     }
 
     init () {
-        for (event in this._mediaEvents) {
+        for (let event in this._mediaEvents) {
             this._video.addEventListener(event, this._mediaEvents[event]);
         }
     }
@@ -58,7 +61,7 @@ class VideoTag {
     }
 
     isPaused () {
-        return this._video.paused
+        return this._video.paused;
     }
 
     // Media Events

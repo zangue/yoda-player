@@ -7,7 +7,7 @@ class FragmentLoader {
         this._metricsManager = metricsManager;
     }
 
-    load(request) {
+    load (request) {
         let xhr = new XMLHttpRequest(),
             isFistProgress = true,
             requestStartDate = null,
@@ -109,8 +109,9 @@ class FragmentLoader {
 
             xhr.send();
         } catch (e) {
-            console.log("Something went wrong during fragment request: " e.message);
+            console.log("Something went wrong during fragment request: " + e.message);
         }
+    }
 
 }
 
