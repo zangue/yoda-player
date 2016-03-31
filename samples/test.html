@@ -11,5 +11,14 @@
 <body>
   <script src="../build/yoda-player.js"></script>
   <video id="video" controls="true" autoplay="true"></video>
+  <script>
+    var config = {
+        mpd: "http://dash.edgesuite.net/envivio/Envivio-dash2/manifest.mpd",
+        id: "video"
+    };
+    var player = new yoda.Player(config);
+
+    player.setup();
+  </script>
 </body>
 </html>
