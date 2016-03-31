@@ -31,4 +31,5 @@ class MetricsManager {
 
 }
 
-export default MetricsManager;
+let metricsManager = new MetricsManager();
+export default metricsManager;
