@@ -5,6 +5,9 @@ class Events {
         this.PLAYBACK_RESUMED = "play";
         this.PLAYBACK_SEEKING = "seeking";
         this.PLAYBACK_STALLED = "stalled";
+
+        // ManifestLoader
+        this.MANIFEST_LOADED = "manifestLoaded";
     }
 }
 
