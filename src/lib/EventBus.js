@@ -84,4 +84,4 @@ class EventBus {
 }
 
 let eventBus = new eventBus();
-export default EventBus;
+export default eventBus;
