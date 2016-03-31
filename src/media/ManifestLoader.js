@@ -1,3 +1,6 @@
+import EventBus from "../lib/EventBus.js";
+import Events from "../media/Events.js";
+
 class ManifestLoader {
 
     constructor () {
@@ -10,20 +13,31 @@ class ManifestLoader {
             onerror;
 
         onload = function () {
-            if (request.status === 200) {
+            if (request.status >= 200 && request.status <= 299) {
+                console.log("Manifest Loaded success");
                 this._manifest = request.responseText;
+                EventBus.broadcast(
+                    Events.MANIFEST_LOADED, {
+                        manifest: this._manifest
+                    }
+                );
             }
         };
 
         onerror = function () {
-            console.error("Could not load manifest.");
+            console.log("Error");
+            EventBus.broadcast(
+                Events.MANIFEST_LOADED, {
+                    manifest: null
+                }
+            );
         };
 
         console.log("Loading manifest...");
 
         try {
             request.onload = onload.bind(this);
-            request.onerror = onerror;
+            request.onerror = onerror.bind(this);
 
             request.open("GET", url, true);
             request.responseType = "text";
@@ -32,7 +46,6 @@ class ManifestLoader {
             request.onerror();
         }
 
-        console.log("Loading manifest... DONE.");
     }
 
     getManifest () {
