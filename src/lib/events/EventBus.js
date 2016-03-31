@@ -3,7 +3,7 @@ class EventBus {
         this.listeners = {};
     }
 
-    _getListenerIdx (eventName, listener) {
+    _getListenerIdx (eventName, callback, scope) {
         let eventListeners = this.listeners[eventName],
             i,
             idx = -1;
@@ -13,7 +13,8 @@ class EventBus {
         }
 
         for (i = 0; i < eventListeners.length; i++) {
-            if (eventListeners[i] === listener) {
+            if (eventListeners[i].callback === callback &&
+                (!scope || scope === eventListeners[i].scope)) {
                 idx = i;
                 break;
             }
@@ -22,35 +23,42 @@ class EventBus {
         return idx;
     }
 
-    subscribe(eventName, listener) {
+    subscribe(eventName, callback, scope) {
+        let listener,
+            idx;
+
         if (!eventName) {
             throw new Error("Event name cannot be null or undefined");
         }
 
-        if (!listener || typeof(listener) !== "function") {
+        if (!callback || typeof(callback) !== "function") {
             throw new Error("Listener must be of type function.");
         }
 
-        if (!this.listeners[eventName]) {
-            this.listeners[eventName] = [];
-        }
+        idx = this._getListenerIdx(eventName, callback, scope);
 
+        if (idx >= 0) return;
+
+        listener = {
+            callback: callback,
+            scope: scope
+        };
+
+        this.listeners[eventName] = this.listeners[eventName] || [];
         this.listeners[eventName].push(listener);
 
     }
 
-    unsubscribe (eventName, listener) {
+    unsubscribe (eventName, callback, scope) {
         let idx;
 
-        if (!eventName || !listener || !this.listeners[eventName]) {
+        if (!eventName || !callback || !this.listeners[eventName]) {
             return;
         }
 
-        idx = this._getListenerIdx(eventName, listener);
+        idx = this._getListenerIdx(eventName, callback, scope);
 
-        if (idx === -1) {
-            return;
-        }
+        if (idx === -1) return;
 
         this.listeners[eventName].splice(idx, 1);
     }
@@ -63,13 +71,11 @@ class EventBus {
             return;
         }
 
-        if (!args) {
-            args = {};
-        }
+        args = args || {};
 
-        for (i = 0; i < eventListeners.length; i++) {
-            eventListeners[i].listener.call(args);
-        }
+        eventListeners.forEach(function (listener) {
+            listener.callback.call(listener.scope, args);
+        });
     }
 
     reset () {
