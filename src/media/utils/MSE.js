@@ -22,7 +22,7 @@ class MSE {
         videoElement.setSource('');
     }
 
-    static reateSourceBuffer (mediaSource, fullMimeType) {
+    static createSourceBuffer (mediaSource, fullMimeType) {
         let sourceBuffer;
 
         try {
