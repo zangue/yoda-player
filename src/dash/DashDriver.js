@@ -11,10 +11,10 @@ class DashDriver {
         as = period.adaptationSets;
 
         for (i = 0; i < as.length; i++) {
-            if (as[i].common.mimeType) {
-                asType = as[i].common.mimeType.split('/')[0];
+            if (as[i].mimeType) {
+                asType = as[i].mimeType.split('/')[0];
             } else {
-                asType = as[i].representations[0].common.mimeType.split('/')[0];
+                asType = as[i].representations[0].mimeType.split('/')[0];
             }
 
             if (asType == type) {
@@ -65,7 +65,7 @@ class DashDriver {
 
         mediaInfo.id = as.id;
         mediaInfo.mimeType = as.mimeType;
-        mediaInfo.codecs = as.common.codecs || reps[0].common.codecs || '';
+        mediaInfo.codecs = as.codecs || reps[0].codecs || '';
         mediaInfo.lang = as.lang;
 
         for (i = 0; i < reps.length; i++) {

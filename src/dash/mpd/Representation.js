@@ -1,11 +1,13 @@
-class Representation {
+import MpdCommon from "./MpdCommon.js";
+
+class Representation extends MpdCommon {
     constructor () {
+        super();
         this.id = null;
         this.bandwidth = null;
         this.qualityRanking = null;
         this.dependencyId = null;
         this.mediaStreamStructureId = null;
-        this.common = null;
         this.baseUrls = [];
         this.subRepresentations = [];
         this.segmentBase = null;

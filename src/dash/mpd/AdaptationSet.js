@@ -1,10 +1,12 @@
-class AdaptationSet {
+import MpdCommon from "./MpdCommon.js";
+
+class AdaptationSet extends MpdCommon {
     constructor () {
+        super();
         this.xlinkHref = null;
         this.xlinkActuate = null;
         this.id = null;
         this.group = null;
-        this.common = null;
         this.lang = null;
         this.contentType = null;
         this.par = null;

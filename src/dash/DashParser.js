@@ -2,7 +2,6 @@ import MPD from "./mpd/MPD.js";
 import Period from "./mpd/Period.js";
 import AdaptationSet from "./mpd/AdaptationSet.js";
 import Representation from "./mpd/Representation.js";
-import MpdCommon from "./mpd/MpdCommon.js"; // common attributes and elements
 import BaseUrl from "./mpd/BaseUrl.js";
 import Initialization from "./mpd/Initialization.js";
 import RepresentationIndex from "./mpd/RepresentationIndex.js";
@@ -29,25 +28,23 @@ class DashParser {
         return parsedChildren;
     }
 
-    parseCommon(node) {
-        let common = new MpdCommon();
+    parseCommon(node, element) {
+        element.profiles = this.parseAttribute(node, "profiles");
+        element.width = this.parseAttribute(node, "width");
+        element.height = this.parseAttribute(node, "height");
+        element.sar = this.parseAttribute(node, "sar");
+        element.frameRate = this.parseAttribute(node, "frameRate");
+        element.audioSamplingRate = this.parseAttribute(node, "audioSamplingRate");
+        element.mimeType = this.parseAttribute(node, "mimeType");
+        element.segmentProfiles = this.parseAttribute(node, "segmentProfiles");
+        element.codecs = this.parseAttribute(node, "codecs");
+        element.maximumSAPPeriod = this.parseAttribute(node, "maximumSAPPeriod");
+        element.startWithSAP = this.parseAttribute(node, "startWithSAP");
+        element.maxPlayoutRate = this.parseAttribute(node, "maxPlayoutRate");
+        element.codingDependency  = this.parseAttribute(node, "codingDependency");
+        element.scanType = this.parseAttribute(node, "scanType");
 
-        common.profiles = this.parseAttribute(node, "profiles");
-        common.width = this.parseAttribute(node, "width");
-        common.height = this.parseAttribute(node, "height");
-        common.sar = this.parseAttribute(node, "sar");
-        common.frameRate = this.parseAttribute(node, "frameRate");
-        common.audioSamplingRate = this.parseAttribute(node, "audioSamplingRate");
-        common.mimeType = this.parseAttribute(node, "mimeType");
-        common.segmentProfiles = this.parseAttribute(node, "segmentProfiles");
-        common.codecs = this.parseAttribute(node, "codecs");
-        common.maximumSAPPeriod = this.parseAttribute(node, "maximumSAPPeriod");
-        common.startWithSAP = this.parseAttribute(node, "startWithSAP");
-        common.maxPlayoutRate = this.parseAttribute(node, "maxPlayoutRate");
-        common.codingDependency  = this.parseAttribute(node, "codingDependency");
-        common.scanType = this.parseAttribute(node, "scanType");
-
-        return common;
+        return element;
     }
 
     parseBaseUrl (node) {
@@ -162,7 +159,10 @@ class DashParser {
         representation.qualityRanking = this.parseAttribute(node, "qualityRanking");
         representation.dependencyId = this.parseAttribute(node, "dependencyId");
         representation.mediaStreamStructureId = this.parseAttribute(node, "mediaStreamStructureId");
-        representation.common = this.parseCommon(node);
+        //representation.common = this.parseCommon(node);
+
+        // Parse common attributes
+        representation = this.parseCommon(node, representation);
 
         representation.segmentList = this.parseChildren(node, "SegmentList", this.parseSegment.bind(this));
 
@@ -177,7 +177,6 @@ class DashParser {
         as.xlinkActuate = this.parseAttribute(node, "xlink:actuate");
         as.id = this.parseAttribute(node, "id");
         as.group = this.parseAttribute(node, "group");
-        as.common = this.parseCommon(node);
         as.lang = this.parseAttribute(node, "lang");
         as.contentType = this.parseAttribute(node, "contentType");
         as.par = this.parseAttribute(node, "par");
@@ -193,6 +192,9 @@ class DashParser {
         as.bitStreamSwitching = this.parseAttribute(node, "bitStreamSwitching");
         as.subsegmentAlignment = this.parseAttribute(node, "subsegmentAlignment");
         as.subsegmentStartsWithSAP = this.parseAttribute(node, "subsegmentStartsWithSAP");
+
+        // Parse common attributes
+        as = this.parseCommon(node, as);
 
         as.contentComponents = this.parseChildren(node, "ContentComponent", this.parseContentComponent.bind(this));
         as.representations = this.parseChildren(node, "Representation", this.parseRepresentation.bind(this));
@@ -274,7 +276,6 @@ class DashParser {
 
         end = new Date();
         console.log("Parsing complete. Total duration: " + (end.getTime() - start.getTime()) + " ms.");
-        console.dir(mpdObj);
 
         return mpdObj;
     }
