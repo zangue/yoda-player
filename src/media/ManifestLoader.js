@@ -1,5 +1,7 @@
 import EventBus from "../lib/EventBus.js";
 import Events from "../media/Events.js";
+import XHR from "./net/XHR.js";
+import Request from "./objects/Request.js";
 
 class ManifestLoader {
 
@@ -8,14 +10,14 @@ class ManifestLoader {
     }
 
     load (url) {
-        let request = new XMLHttpRequest(),
-            onload,
-            onerror;
+        let xhr,
+            request,
+            callbacks = {};
 
-        onload = function () {
-            if (request.status >= 200 && request.status <= 299) {
+        callbacks.onload = function (xhr) {
+            if (xhr.status >= 200 && xhr.status <= 299) {
                 console.log("Manifest Loaded success");
-                this._manifest = request.responseText;
+                this._manifest = xhr.responseText;
                 EventBus.broadcast(
                     Events.MANIFEST_LOADED, {
                         manifest: this._manifest
@@ -24,7 +26,7 @@ class ManifestLoader {
             }
         };
 
-        onerror = function () {
+        callbacks.onerror = function (xhr) {
             console.log("Error");
             EventBus.broadcast(
                 Events.MANIFEST_LOADED, {
@@ -35,15 +37,20 @@ class ManifestLoader {
 
         console.log("Loading manifest...");
 
-        try {
-            request.onload = onload.bind(this);
-            request.onerror = onerror.bind(this);
+        request = new Request();
+        xhr = new XHR();
 
-            request.open("GET", url, true);
-            request.responseType = "text";
-            request.send();
+        request.method = "GET";
+        request.mediaType = "text";
+        request.url = url;
+        request.async = true;
+        request.responseType = "text";
+
+
+        try {
+            xhr.load(request, callbacks);
         } catch (e) {
-            request.onerror();
+            console.log("Something went wrong during http request: " + e.message);
         }
 
     }
