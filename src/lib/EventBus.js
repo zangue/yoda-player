@@ -64,7 +64,6 @@ class EventBus {
     }
 
     broadcast(eventName, args) {
-        //console.log("broadcast: " + eventName + ", " + args);
         let eventListeners = this.listeners[eventName],
             i;
 
