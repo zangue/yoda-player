@@ -1,4 +1,4 @@
-import FragmentLoader from "./FragmentLoader.js";
+import FragmentLoader from "./net/FragmentLoader.js";
 import ABRManager from "./manager/ABRManager.js";
 import BufferManager from "./manager/BufferManager.js";
 import FragmentManager from "./manager/FragmentManager.js";

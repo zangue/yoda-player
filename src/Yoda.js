@@ -2,7 +2,7 @@ import DashParser from "./dash/DashParser.js";
 import DashDriver from "./dash/DashDriver.js";
 import IndexHandler from "./dash/IndexHandler.js";
 import MediaInfo from "./media/objects/infos/MediaInfo.js";
-import ManifestLoader from "./media/ManifestLoader.js";
+import ManifestLoader from "./media/net/ManifestLoader.js";
 import EventBus from "./lib/EventBus.js";
 import Events from "./media/Events.js";
 import MSE from "./media/utils/MSE.js";

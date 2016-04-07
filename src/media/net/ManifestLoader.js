@@ -1,7 +1,7 @@
-import EventBus from "../lib/EventBus.js";
-import Events from "../media/Events.js";
-import XHR from "./net/XHR.js";
-import Request from "./objects/Request.js";
+import EventBus from "../../lib/EventBus.js";
+import Events from "../Events.js";
+import XHR from "./XHR.js";
+import Request from "../objects/Request.js";
 
 class ManifestLoader {
 

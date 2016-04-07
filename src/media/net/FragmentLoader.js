@@ -1,7 +1,7 @@
-import Fragment from "./objects/Fragment.js";
-import EventBus from "../lib/EventBus.js";
-import Events from "../media/Events.js";
-import XHR from "./net/XHR.js";
+import Fragment from "../objects/Fragment.js";
+import EventBus from "../../lib/EventBus.js";
+import Events from "../Events.js";
+import XHR from "./XHR.js";
 
 // TODO
 class FragmentLoader {
