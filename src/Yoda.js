@@ -64,7 +64,7 @@ class Yoda {
         this.videoCodec = DashDriver.getCodecFullNameForType("video");
 
         // create the MediaSource object
-        this.mediaSource = new MediaSource()/*MSE.createMediaSource()*/;
+        this.mediaSource = MSE.createMediaSource();
 
         // Video Element
         this.video = new VideoTag(this._config.id);
