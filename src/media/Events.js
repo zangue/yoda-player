@@ -8,6 +8,10 @@ class Events {
 
         // ManifestLoader
         this.MANIFEST_LOADED = "manifestLoaded";
+
+        // FragmentLoader
+        this.FRAGMENT_LOADED = "fragmentLoaded";
+        this.FRAGMENT_PROGRESS = "fragmentProgress";
     }
 }
 
