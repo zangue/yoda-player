@@ -1,5 +1,5 @@
 import EventBus from "../lib/EventBus.js";
-import Events from "Events.js";
+import Events from "./Events.js";
 
 /**
  * HTML5 Video Element handler
@@ -16,7 +16,8 @@ class VideoTag {
             "play": this.onPlay,
             "pause": this.onPause,
             "seeking": this.onSeeking,
-            "stalled": this.onStalled
+            "stalled": this.onStalled,
+            "ended": this.onEnded
         };
     }
 
@@ -79,6 +80,10 @@ class VideoTag {
 
     onStalled () {
         console.log("on stalled");
+    }
+
+    onEnded () {
+        console.log("on ended");
     }
 }
 
