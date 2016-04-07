@@ -1,13 +1,26 @@
 import DashParser from "./dash/DashParser.js";
 import DashDriver from "./dash/DashDriver.js";
+import IndexHandler from "./dash/IndexHandler.js";
 import MediaInfo from "./media/objects/infos/MediaInfo.js";
 import ManifestLoader from "./media/ManifestLoader.js";
 import EventBus from "./lib/EventBus.js";
 import Events from "./media/Events.js";
+import MSE from "./media/utils/MSE.js";
+import BufferManager from "./media/manager/BufferManager.js";
+import StreamEngine from "./media/StreamEngine.js";
+import VideoTag from "./media/VideoTag.js";
 
 class Yoda {
     constructor (config) {
         this._config = config;
+        this.video = null;
+        this.videoCodec = null;
+        //this.audioCodec = null;
+        this.mediaSource = null;
+        this.manifest = null;
+        this.indexHandler = null;
+        this.videoSourceBuffer = null;
+        //this.audioSourceBuffer = null;
     }
 
     setup () {
@@ -18,6 +31,11 @@ class Yoda {
         if (!this._config.id) {
             throw "Video element ID is missing!";
         }
+        let baseUrl = this._config.mpd.substr(0, this._config.mpd.lastIndexOf('/') + 1);
+
+        DashDriver.setBaseUrl(baseUrl);
+
+        console.log("base: " + baseUrl);
 
         EventBus.subscribe(Events.MANIFEST_LOADED, this.onManifestLoaded, this);
 
@@ -33,9 +51,52 @@ class Yoda {
         }
 
         console.log("Manifest Loaded");
-        console.log(event.manifest);
+        //console.log(event.manifest);
 
         let parser = new DashParser();
+
+        //console.dir(parser.parse(event.manifest));
+        this.manifest = parser.parse(event.manifest);
+
+        // configure DashDriver
+        DashDriver.setManifest(this.manifest);
+
+        this.videoCodec = DashDriver.getCodecFullNameForType("video");
+
+        // create the MediaSource object
+        this.mediaSource = new MediaSource()/*MSE.createMediaSource()*/;
+
+        // Video Element
+        this.video = new VideoTag(this._config.id);
+        this.video.init();
+
+        // Set vide duration
+        //this.video.setDuration(/*Driver get duration*/);
+
+        // Set source
+        MSE.attachMediaSource(this.video, this.mediaSource);
+
+        // add event listeners
+        this.mediaSource.addEventListener("webkitsourceopen", this.onSourceOpened.bind(this), false);
+        this.mediaSource.addEventListener("sourceopen", this.onSourceOpened.bind(this), false);
+    }
+
+    /**
+     * Setup Buffers and Stream Engines
+     */
+    onSourceOpened () {
+        console.log("Source is open");
+        let vBufferManager;
+        let vStreamEngine;
+        console.log("Codec: " + this.videoCodec);
+        this.videoSourceBuffer = this.mediaSource.addSourceBuffer(this.videoCodec);
+
+        vBufferManager = new BufferManager("video", this.videoSourceBuffer);
+        vBufferManager.setup();
+
+        vStreamEngine = new StreamEngine("video", vBufferManager);
+        vStreamEngine.setup();
+        vStreamEngine.start();
     }
 
     reset () {
