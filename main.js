@@ -21,7 +21,7 @@ setTimeout(function() {
 
 var context = window || global;
 
-var yoda = context.yoda;
+var yoda = context.yoda = {};
 if (!yoda) {
     yoda = context.yoda = {}
 }
