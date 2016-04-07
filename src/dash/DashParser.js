@@ -165,6 +165,7 @@ class DashParser {
         representation = this.parseCommon(node, representation);
 
         representation.segmentList = this.parseChildren(node, "SegmentList", this.parseSegment.bind(this));
+        representation.segmentTemplate = this.parseChildren(node, "SegmentTemplate", this.parseSegment.bind(this));
 
         return representation;
     }
