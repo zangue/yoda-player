@@ -138,7 +138,9 @@ class XHR {
             //console.log(++i + " XHR LOAD: method: " + request.method + " url: " + request.url + " async: " + request.async + " responseType: " + request.responseType);
 
             xhr.open(request.method, request.url, request.async);
-            xhr.responseType = this.responseType;
+            xhr.responseType = request.responseType;
+
+            //console.log("XHR: responseType:" + xhr.responseType);
 
             xhr.send();
         } catch (e) {
