@@ -164,8 +164,10 @@ class DashParser {
         // Parse common attributes
         representation = this.parseCommon(node, representation);
 
+        // TODO
         representation.segmentList = this.parseChildren(node, "SegmentList", this.parseSegment.bind(this));
         representation.segmentTemplate = this.parseChildren(node, "SegmentTemplate", this.parseSegment.bind(this));
+        representation.segmentBase = this.parseChildren(node, "SegmentBase", this.parseSegment.bind(this));
 
         return representation;
     }
