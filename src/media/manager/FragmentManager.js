@@ -15,7 +15,9 @@ class FragmentManager {
 
         //console.dir(rep);
 
-        if (rep.segmentList[0].initialization) {
+        if (rep.segmentBase[0].initialization) {
+            initUrl = rep.segmentBase[0].initialization.sourceURL;
+        } else if (rep.segmentList[0].initialization) {
             //console.log("initialization " + rep.segmentList[0].initialization.sourceURL);
             initUrl = rep.segmentList[0].initialization.sourceURL;
         } else {
