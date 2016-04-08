@@ -61,6 +61,12 @@ class Yoda {
         // configure DashDriver
         DashDriver.setManifest(this.manifest);
 
+        // prefer baseurl defined in manifest
+        if (this.manifest.baseUrls){
+            //console.log("baseUrl: " + this.manifest.baseUrls[0].url);
+            DashDriver.setBaseUrl(this.manifest.baseUrls[0].url);
+        }
+
         this.videoCodec = DashDriver.getCodecFullNameForType("video");
 
         // create the MediaSource object
@@ -70,8 +76,11 @@ class Yoda {
         this.video = new VideoTag(this._config.id);
         this.video.init();
 
+        let minfos = DashDriver.getManifestInfos();
+
         // Set vide duration
-        //this.video.setDuration(/*Driver get duration*/);
+        //if (minfos.mediaPresentationDuration)
+        //    this.video.setDuration(minfos.mediaPresentationDuration);
 
         // Set source
         MSE.attachMediaSource(this.video, this.mediaSource);
@@ -89,7 +98,8 @@ class Yoda {
         let vBufferManager;
         let vStreamEngine;
         console.log("Codec: " + this.videoCodec);
-        this.videoSourceBuffer = this.mediaSource.addSourceBuffer(this.videoCodec);
+        //this.videoSourceBuffer = this.mediaSource.addSourceBuffer(this.videoCodec);
+        this.videoSourceBuffer = this.mediaSource.addSourceBuffer("video/mp4");
 
         vBufferManager = new BufferManager("video", this.videoSourceBuffer);
         vBufferManager.setup();
