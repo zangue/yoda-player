@@ -4,7 +4,10 @@ class Events {
         this.PLAYBACK_PAUSED = "pause";
         this.PLAYBACK_RESUMED = "play";
         this.PLAYBACK_SEEKING = "seeking";
+        this.PLAYBACK_SEEKED = "seeked";
         this.PLAYBACK_STALLED = "stalled";
+        this.PLAYBACK_ENDED = "ended";
+        this.PLAYBACK_CANPLAYTHROUGH = "canplaythrough";
 
         // ManifestLoader
         this.MANIFEST_LOADED = "manifestLoaded";
