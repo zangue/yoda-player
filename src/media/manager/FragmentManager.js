@@ -15,11 +15,14 @@ class FragmentManager {
 
         //console.dir(rep);
 
-        if (rep.segmentBase[0].initialization) {
-            initUrl = rep.segmentBase[0].initialization.sourceURL;
-        } else if (rep.segmentList[0].initialization) {
+        if (rep.segmentBase.length) {
+            //console.dir(rep.segmentBase);
+            if (rep.segmentBase[0].initialization)
+                initUrl = rep.segmentBase[0].initialization.sourceURL;
+        } else if (rep.segmentList.length) {
             //console.log("initialization " + rep.segmentList[0].initialization.sourceURL);
-            initUrl = rep.segmentList[0].initialization.sourceURL;
+            if (rep.segmentList[0].initialization)
+                initUrl = rep.segmentList[0].initialization.sourceURL;
         } else {
             throw "No initialization found";
         }
