@@ -24,6 +24,9 @@ class Yoda {
     }
 
     setup () {
+        let baseUrl;
+        let manifestLoader;
+
         if (!this._config.mpd) {
             throw "No source set!";
         }
@@ -31,20 +34,25 @@ class Yoda {
         if (!this._config.id) {
             throw "Video element ID is missing!";
         }
-        let baseUrl = this._config.mpd.substr(0, this._config.mpd.lastIndexOf('/') + 1);
+
+        EventBus.subscribe(Events.MANIFEST_LOADED, this.onManifestLoaded, this);
+
+        baseUrl = this._config.mpd.substr(0, this._config.mpd.lastIndexOf('/') + 1);
 
         DashDriver.setBaseUrl(baseUrl);
 
         console.log("base: " + baseUrl);
 
-        EventBus.subscribe(Events.MANIFEST_LOADED, this.onManifestLoaded, this);
-
-        let manifestLoader = new ManifestLoader();
+        manifestLoader = new ManifestLoader();
 
         manifestLoader.load(this._config.mpd);
     }
 
     onManifestLoaded (event) {
+        let parser;
+        let base;
+        let minfos;
+
         if (!event.manifest) {
             console.log("onManifestLoaded: Could not load manifest file");
             throw "Could not load manifest file";
@@ -53,7 +61,7 @@ class Yoda {
         console.log("Manifest Loaded");
         //console.log(event.manifest);
 
-        let parser = new DashParser();
+        parser = new DashParser();
 
         //console.dir(parser.parse(event.manifest));
         this.manifest = parser.parse(event.manifest);
@@ -63,22 +71,28 @@ class Yoda {
 
         // prefer baseurl defined in manifest
         if (this.manifest.baseUrls){
+            base = this.manifest.baseUrls[0].url;
             //console.log("baseUrl: " + this.manifest.baseUrls[0].url);
-            DashDriver.setBaseUrl(this.manifest.baseUrls[0].url);
+            if (base.substr(0,3) !== './')
+                DashDriver.setBaseUrl(base);
         }
 
         this.videoCodec = DashDriver.getCodecFullNameForType("video");
 
+        // Video Element
+        this.video = new VideoTag(this._config.id);
+        this.video.setup();
+
+        // Check if can play the video
+        //if (this.video.getElement().canPlayType(this.videoCodec))
+        console.log("Can play type " + this.videoCodec + ": " + this.video.getElement().canPlayType(this.videoCodec));
+
         // create the MediaSource object
         this.mediaSource = MSE.createMediaSource();
 
-        // Video Element
-        this.video = new VideoTag(this._config.id);
-        this.video.init();
+        minfos = DashDriver.getManifestInfos();
 
-        let minfos = DashDriver.getManifestInfos();
-
-        // Set vide duration
+        // Set video duration
         //if (minfos.mediaPresentationDuration)
         //    this.video.setDuration(minfos.mediaPresentationDuration);
 
@@ -97,6 +111,7 @@ class Yoda {
         console.log("Source is open");
         let vBufferManager;
         let vStreamEngine;
+
         console.log("Codec: " + this.videoCodec);
         //this.videoSourceBuffer = this.mediaSource.addSourceBuffer(this.videoCodec);
         this.videoSourceBuffer = this.mediaSource.addSourceBuffer("video/mp4");
@@ -104,7 +119,7 @@ class Yoda {
         vBufferManager = new BufferManager("video", this.videoSourceBuffer);
         vBufferManager.setup();
 
-        vStreamEngine = new StreamEngine("video", vBufferManager);
+        vStreamEngine = new StreamEngine("video", vBufferManager, this.video);
         vStreamEngine.setup();
         vStreamEngine.start();
     }
