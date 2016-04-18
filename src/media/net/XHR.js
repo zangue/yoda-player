@@ -6,6 +6,10 @@ import ThroughputTrace from "../objects/metrics/ThroughputTrace.js";
 
 class XHR {
 
+    constructor () {
+        this.xhrs = [];
+    }
+
     load (request, callbacks) {
         let xhr = new XMLHttpRequest(),
             i = 0,
@@ -90,6 +94,12 @@ class XHR {
         };
 
         onabort = function () {
+            if (this.xhrs.indexOf(xhr) === -1) {
+                return;
+            } else {
+                xhrs.splice(xhrs.indexOf(xhr), 1);
+            }
+
             //console.log(++i + " XHR: onabort");
             if (callbacks.onabort) {
                 callbacks.onabort(xhr);
@@ -98,6 +108,7 @@ class XHR {
 
         onerror = function () {
             //console.log(++i + " XHR: Failed");
+            console.log("Request Failed: " + request.url);
             addMetrics();
 
             if (callbacks.onerror) {
@@ -121,6 +132,14 @@ class XHR {
 
         onloadend = function () {
             //console.log(++i + " XHR: onloadend");
+            if (this.xhrs.indexOf(xhr) === -1) {
+                return;
+            } else {
+                xhrs.splice(xhrs.indexOf(xhr), 1);
+            }
+
+            addMetrics();
+
             if (callbacks.onloadend) {
                 callbacks.onloadend(xhr);
             }
@@ -141,13 +160,22 @@ class XHR {
             xhr.responseType = request.responseType;
 
             //console.log("XHR: responseType:" + xhr.responseType);
-
+            this.xhrs.push(xhr);
             xhr.send();
         } catch (e) {
             console.log("XHR: Something went wrong");
             xhr.onerror();
             throw e.message;
         }
+    }
+
+    abort () {
+        this.xhrs.forEach(xhr => {
+            xhr.onloadend = xhr.onerror = xhr.onabort = undefined;
+            xhr.abort();
+        });
+
+        this.xhrs = [];
     }
 }
 

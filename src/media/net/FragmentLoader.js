@@ -7,11 +7,11 @@ import XHR from "./XHR.js";
 class FragmentLoader {
 
     constructor () {
+        this.xhrHandler = new XHR();
     }
 
     load (request) {
-        let xhr,
-            callbacks = {};
+        let callbacks = {};
 
         callbacks.onload = function (xhr) {
             if (xhr.status >= 200 && xhr.status <= 299) {
@@ -51,13 +51,15 @@ class FragmentLoader {
 
         console.log("Loading Fragment...");
 
-        xhr = new XHR();
-
         try {
-            xhr.load(request, callbacks);
+            this.xhrHandler.load(request, callbacks);
         } catch (e) {
             console.log("[FragmentLoader] Something went wrong during http request: " + e.message);
         }
+    }
+
+    abort () {
+        this.xhrHandler.abort();
     }
 
 }

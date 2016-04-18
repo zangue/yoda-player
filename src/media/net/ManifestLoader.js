@@ -7,11 +7,11 @@ class ManifestLoader {
 
     constructor () {
         this._manifest = null;
+        this.xhrHandler = new XHR();
     }
 
     load (url) {
-        let xhr,
-            request,
+        let request,
             callbacks = {};
 
         callbacks.onload = function (xhr) {
@@ -38,7 +38,6 @@ class ManifestLoader {
         console.log("Loading manifest...");
 
         request = new Request();
-        xhr = new XHR();
 
         request.method = "GET";
         request.mediaType = "text";
@@ -48,11 +47,15 @@ class ManifestLoader {
 
 
         try {
-            xhr.load(request, callbacks);
+            this.xhrHandler.load(request, callbacks);
         } catch (e) {
             console.log("Something went wrong during http request: " + e.message);
         }
 
+    }
+
+    abort () {
+        this.xhrHandler.abort();
     }
 
     getManifest () {
