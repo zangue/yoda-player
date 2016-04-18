@@ -75,7 +75,7 @@ class DashDriver {
                 mimeType = as[i].mimeType || as[i].representations[0].mimeType;
                 codecs = as[i].codecs || as[i].representations[0].codecs;
 
-                return mimeType + ';codecs="' + codecs + '"';
+                return mimeType + '; codecs="' + codecs + '"';
             }
         }
     }
@@ -172,6 +172,8 @@ class DashDriver {
 
         return infos;
     }
+
+    // TODO - getInitUrl/getSegmentURL. Parameter: representation
 
     getInit (representation) {
         //if representation.segmentList
