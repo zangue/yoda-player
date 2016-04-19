@@ -245,7 +245,7 @@ class DashParser {
         mpd.mediaPresentationDuration = this.parseAttribute(node, "mediaPresentationDuration");
         mpd.minimumUpdatePeriod = this.parseAttribute(node, "minimumUpdatePeriod");
         mpd.minBufferTime = this.parseAttribute(node, "minBufferTime");
-        mpd.timeShiftBufferDepth = this.parseAttribute(node, "timeShiftBufferDepth");
+        mpd.timeShiftBufferDepth = this.parseAttribute(node, "timeShiftBufferDepth") || Infinity;
         mpd.suggestedPresentationDelay = this.parseAttribute(node, "suggestedPresentationDelay");
         mpd.maxSegmentDuration = this.parseAttribute(node, "maxSegmentDuration");
         mpd.maxSubSegmentDuration = this.parseAttribute(node, "maxSubSegmentDuration");
