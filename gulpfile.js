@@ -10,7 +10,7 @@ gulp.task('connect', function () {
     connect.server({
             base: 'http://localhost',
             port: 9000,
-            root: './build',
+            root: './samples',
             livereload: true
     });
 });
