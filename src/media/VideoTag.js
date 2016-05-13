@@ -91,7 +91,7 @@ class VideoTag {
     onPlay () {
         console.log("on play");
         EventBus.broadcast(
-            Events.PLAYBACK_RESUMED, {
+            Events.PLAYBACK_PLAY, {
                 data: null
             }
         );
