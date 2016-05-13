@@ -60,12 +60,11 @@ class SegmentBaseHandler {
         boundaries[1] = parseInt(boundaries[1]);
         bytesInRange = (boundaries[1] - boundaries[0]) + 1;
 
-        //rangeStart = (this.index * bytesInRange) + boundaries[0];
-        //rangeEnd = (this.index * bytesInRange) + boundaries[1];
-        rangeStart
+        rangeStart = (this.index * bytesInRange) + boundaries[0];
+        rangeEnd = (this.index * bytesInRange) + boundaries[1];
         this.index++;
         range = String(rangeStart) + '-' + String(rangeEnd);
-
+        console.log("Range: " + range);
         return this._buildSegmentRequest(representation, url, range, false);
 
     }
