@@ -45,7 +45,6 @@ class DashDriver {
         return this._getAdaptationForType(type);
     }
 
-    // TODO - mind Base url in MPDs
     getBaseUrl () {
         return this.baseUrl;
     }
@@ -75,7 +74,7 @@ class DashDriver {
                 mimeType = as[i].mimeType || as[i].representations[0].mimeType;
                 codecs = as[i].codecs || as[i].representations[0].codecs;
 
-                return mimeType + '; codecs="' + codecs + '"';
+                return mimeType + ';codecs="' + codecs + '"';
             }
         }
     }
@@ -90,16 +89,13 @@ class DashDriver {
             let repBitrate = parseInt(reps[i].bandwidth);
 
             if (repBitrate === bitrate) {
+                console.log("[DashDriver] getRepresentationForBitrate(): found representation with id " + reps[i].id + " for bitrate " + bitrate);
                 representation = reps[i];
                 break;
             }
         }
-
+        //console.dir(representation);
         return representation;
-    }
-
-    _getSegmentsFromTemplate (representation) {
-
     }
 
     _getSegmentsFromList (representation) {
@@ -121,6 +117,7 @@ class DashDriver {
             reps = as.representations;
 
         mediaInfo.id = as.id;
+        mediaInfo.mediaType = mediaType;
         mediaInfo.mimeType = as.mimeType;
         mediaInfo.codecs = as.codecs || reps[0].codecs || '';
         mediaInfo.lang = as.lang;
@@ -173,11 +170,20 @@ class DashDriver {
         return infos;
     }
 
-    // TODO - getInitUrl/getSegmentURL. Parameter: representation
+    getSegment (representation, index) {
+        let segment;
 
-    getInit (representation) {
-        //if representation.segmentList
-        //    return representation.segmentList.
+        if (representation.segmentList) {
+
+        } else if (representation.segmentTemplate) {
+
+        } else if (representation.segmentBase) {
+
+        } else {
+            throw "unsupported segment type";
+        }
+
+        return segment;
     }
 
     getSegments (representation) {
@@ -206,8 +212,32 @@ class DashDriver {
         // TODO
     }
 
-    // TODO -add methods to replace patterns in segmentTemplate
+    hasSegmentBase (type) {
+        let as = this._getAdaptationForType(type);
 
+        if (as.representations[0].segmentBase.length)
+            return true;
+
+        return false;
+    }
+
+    hasSegmentList (type) {
+        let as = this._getAdaptationForType(type);
+
+        if (as.representations[0].segmentList.length)
+            return true;
+
+        return false;
+    }
+
+    hasSegmentTemplate (type) {
+        let as = this._getAdaptationForType(type);
+
+        if (as.segmentTemplate.length)
+            return true;
+
+        return false;
+    }
 }
 
 let dashDriver = new DashDriver();
