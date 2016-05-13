@@ -97,7 +97,7 @@ class XHR {
             if (this.xhrs.indexOf(xhr) === -1) {
                 return;
             } else {
-                xhrs.splice(xhrs.indexOf(xhr), 1);
+                this.xhrs.splice(this.xhrs.indexOf(xhr), 1);
             }
 
             //console.log(++i + " XHR: onabort");
@@ -135,7 +135,7 @@ class XHR {
             if (this.xhrs.indexOf(xhr) === -1) {
                 return;
             } else {
-                xhrs.splice(xhrs.indexOf(xhr), 1);
+                this.xhrs.splice(this.xhrs.indexOf(xhr), 1);
             }
 
             addMetrics();
@@ -161,6 +161,10 @@ class XHR {
 
             //console.log("XHR: responseType:" + xhr.responseType);
             this.xhrs.push(xhr);
+
+            if (request.range)
+                xhr.setRequestHeader("Range", "bytes=" + request.range);
+
             xhr.send();
         } catch (e) {
             console.log("XHR: Something went wrong");
