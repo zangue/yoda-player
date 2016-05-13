@@ -1,11 +1,9 @@
 import DashParser from "./dash/DashParser.js";
 import DashDriver from "./dash/DashDriver.js";
-import IndexHandler from "./dash/IndexHandler.js";
 import MediaInfo from "./media/objects/infos/MediaInfo.js";
-import ManifestLoader from "./media/net/ManifestLoader.js";
+import ManifestLoader from "./media/http/ManifestLoader.js";
 import EventBus from "./lib/EventBus.js";
 import Events from "./media/Events.js";
-import MSE from "./media/utils/MSE.js";
 import BufferManager from "./media/manager/BufferManager.js";
 import StreamEngine from "./media/StreamEngine.js";
 import VideoTag from "./media/VideoTag.js";
@@ -14,18 +12,12 @@ class Yoda {
     constructor (config) {
         this._config = config;
         this.video = null;
-        this.videoCodec = null;
-        //this.audioCodec = null;
         this.mediaSource = null;
         this.manifest = null;
-        this.indexHandler = null;
-        this.videoSourceBuffer = null;
-        //this.audioSourceBuffer = null;
     }
 
     setup () {
-        let baseUrl;
-        let manifestLoader;
+        let manifestLoader = new ManifestLoader();
 
         if (!this._config.mpd) {
             throw "No source set!";
@@ -36,21 +28,91 @@ class Yoda {
         }
 
         EventBus.subscribe(Events.MANIFEST_LOADED, this.onManifestLoaded, this);
-
-        baseUrl = this._config.mpd.substr(0, this._config.mpd.lastIndexOf('/') + 1);
-
-        DashDriver.setBaseUrl(baseUrl);
-
-        console.log("base: " + baseUrl);
-
-        manifestLoader = new ManifestLoader();
-
         manifestLoader.load(this._config.mpd);
     }
 
-    onManifestLoaded (event) {
-        let parser;
+    getBaseUrl () {
         let base;
+
+        base = this._config.mpd.substr(0, this._config.mpd.lastIndexOf('/') + 1);
+        console.dir(this.manifest);
+        // prefer baseurl defined in manifest
+        if (this.manifest.baseUrls.length){
+            let b = this.manifest.baseUrls[0].url;
+            if (b.substr(0,3) !== './')
+                base = b;
+        }
+
+        console.log('Base URL is: ' + base);
+        return base;
+    }
+
+    configureDriver () {
+        DashDriver.setManifest(this.manifest);
+        DashDriver.setBaseUrl(this.getBaseUrl());
+    }
+
+    createAndSetupVideo () {
+        this.video = new VideoTag(this._config.id);
+        this.video.setup();
+    }
+
+    parseManifest (manifest) {
+        let parser = new DashParser();
+        this.manifest = parser.parse(manifest);
+        console.dir(this.manifest);
+    }
+
+    getCodecForType (type) {
+        return DashDriver.getCodecFullNameForType(type);
+    }
+
+    supportCodec (codec) {
+        return this.video.getElement().canPlayType(codec);
+    }
+
+    createMediaSource () {
+        if (window.MediaSource) {
+            this.mediaSource = new window.MediaSource();
+        } else {
+            throw "MediaSource not supported...";
+        }
+    }
+
+    attachMediaSource () {
+        let objectURL = window.URL.createObjectURL(this.mediaSource);
+        this.video.setSource(objectURL);
+    }
+
+    setupMediaSource () {
+        this.mediaSource.addEventListener("webkitsourceopen", this.onSourceOpened.bind(this), false);
+        this.mediaSource.addEventListener("sourceopen", this.onSourceOpened.bind(this), false);
+    }
+
+    initializeStream (type, codec) {
+        let sourceBuffer;
+        let bufferManager;
+        let streamEngine;
+
+        if (this.supportCodec(codec)) {
+            console.log(type + 'Codec (' + codec + ') is ' + this.supportCodec(codec) + ' supported.');
+            sourceBuffer = this.mediaSource.addSourceBuffer(codec);
+
+            bufferManager = new BufferManager(type, sourceBuffer);
+            bufferManager.setup();
+
+            streamEngine = new StreamEngine(type, bufferManager, this.video);
+            streamEngine.setup();
+        } else {
+            console.log(type + 'Codec (' + codec + ') is not supported.');
+            streamEngine = null;
+        }
+
+
+        return streamEngine;
+    }
+
+    onManifestLoaded (event) {
         let minfos;
 
         if (!event.manifest) {
@@ -58,70 +120,42 @@ class Yoda {
             throw "Could not load manifest file";
         }
 
-        console.log("Manifest Loaded");
-        //console.log(event.manifest);
+        console.log("Manifest Loadeddds");
 
-        parser = new DashParser();
-
-        //console.dir(parser.parse(event.manifest));
-        this.manifest = parser.parse(event.manifest);
-
-        // configure DashDriver
-        DashDriver.setManifest(this.manifest);
-
-        // prefer baseurl defined in manifest
-        if (this.manifest.baseUrls){
-            base = this.manifest.baseUrls[0].url;
-            //console.log("baseUrl: " + this.manifest.baseUrls[0].url);
-            if (base.substr(0,3) !== './')
-                DashDriver.setBaseUrl(base);
-        }
-
-        this.videoCodec = DashDriver.getCodecFullNameForType("video");
-
-        // Video Element
-        this.video = new VideoTag(this._config.id);
-        this.video.setup();
-
-        // Check if can play the video
-        //if (this.video.getElement().canPlayType(this.videoCodec))
-        console.log("Can play type " + this.videoCodec + ": " + this.video.getElement().canPlayType(this.videoCodec));
-
-        // create the MediaSource object
-        this.mediaSource = MSE.createMediaSource();
+        this.parseManifest(event.manifest);
+        this.configureDriver();
+        this.createAndSetupVideo();
 
         minfos = DashDriver.getManifestInfos();
 
-        // Set video duration
-        //if (minfos.mediaPresentationDuration)
-        //    this.video.setDuration(minfos.mediaPresentationDuration);
+        if (minfos.type === "dynamic") {
+            console.log("Trying to play unsupported type: " + minfos.type);
+            throw "Live Streaming is not suported!";
+        }
 
-        // Set source
-        MSE.attachMediaSource(this.video, this.mediaSource);
-
-        // add event listeners
-        this.mediaSource.addEventListener("webkitsourceopen", this.onSourceOpened.bind(this), false);
-        this.mediaSource.addEventListener("sourceopen", this.onSourceOpened.bind(this), false);
+        console.log("creating the media source object");
+        this.createMediaSource();
+        this.attachMediaSource();
+        this.setupMediaSource();
+        console.log("done");
     }
 
+
     /**
-     * Setup Buffers and Stream Engines
+     * initialize and start streams
      */
     onSourceOpened () {
         console.log("Source is open");
-        let vBufferManager;
-        let vStreamEngine;
+        let streamEngines = [];
 
-        console.log("Codec: " + this.videoCodec);
-        //this.videoSourceBuffer = this.mediaSource.addSourceBuffer(this.videoCodec);
-        this.videoSourceBuffer = this.mediaSource.addSourceBuffer("video/mp4");
+        streamEngines.push(this.initializeStream('video', this.getCodecForType('video')));
+        streamEngines.push(this.initializeStream('audio', this.getCodecForType('audio')));
 
-        vBufferManager = new BufferManager("video", this.videoSourceBuffer);
-        vBufferManager.setup();
-
-        vStreamEngine = new StreamEngine("video", vBufferManager, this.video);
-        vStreamEngine.setup();
-        vStreamEngine.start();
+        streamEngines.forEach(se => {
+            if (se) {
+                se.start();
+            }
+        });
     }
 
     reset () {
@@ -132,110 +166,4 @@ class Yoda {
 
 }
 
-/*
-class Yoda {
-    constructor () {
-        // set mimetype and codecs
-        this.mimeType = "video/mp4";
-        this.codecs = "avc1.42c01e";
-        this.amimeType = "audio/mp4";
-        this.acodecs = "mp4a.40.2";
-
-        // create media source instance
-        this.ms = new MediaSource();
-        this.vsourceBuffer = null;
-        this.asourceBuffer = null;
-        this.segNum = 1;
-        this.asegNum = 1;
-        this.maxSegNum = 875;
-        this.video = null;
-        this.bufferCount = 0;
-
-        this.dash = new DashDriver();
-    }
-
-    startup (manifest) {
-        console.log("Starting up ...");
-        let mediaInfo = this.dash.getMediaInfoFor("video", manifest);
-        let audioInfo = this.dash.getMediaInfoFor("audio", manifest);
-        let rep = this.dash.getRepresentationForBitrate("video", mediaInfo.bitrates[0], manifest);
-        let urlList = this.dash.getSegments(rep);
-
-        console.dir(mediaInfo);
-        console.dir(audioInfo);
-        console.dir(urlList);
-        // add event listeners
-        this.ms.addEventListener("webkitsourceopen", this.onSourceOpened.bind(this), false);
-        this.ms.addEventListener("webkitsourceclose", this.onSourceClosed.bind(this), false);
-        this.ms.addEventListener("sourceopen", this.onSourceOpened.bind(this), false);
-
-        // get reference to video
-        this.video = document.querySelector("video");
-
-        // set mediasource as source for the video
-        this.video.src = window.URL.createObjectURL(this.ms);
-        this.video.width = 1280;
-        this.video.height = 720;
-    }
-
-    onSourceOpened () {
-        // create source buffer
-        let value = this.mimeType + ';codecs="' + this.codecs + '"',
-            avalue = this.amimeType + ';codecs="' + this.acodecs + '"',
-            initSegmentURL = "http://www-itec.uni-klu.ac.at/ftp/datasets/mmsys13/video/redbull_6sec/2000kbps/redbull_720p_2000kbps_6sec_segmentinit.mp4";
-            //initSegmentURL = "http://dash.edgesuite.net/envivio/Envivio-dash2/v3_257-Header.m4s";
-
-        console.log("Add Video buffer");
-        this.vsourceBuffer = this.ms.addSourceBuffer(value);
-        console.log("MediaSource readystate: " + this.ms.readyState);
-
-        // request initialization segment
-        let request = new XMLHttpRequest();
-        request.responseType = "arraybuffer";
-        request.open("GET", initSegmentURL, true);
-        request.onload = (function () {
-            let array = new Uint8Array(request.response);
-
-            this.vsourceBuffer.appendBuffer(array);
-
-            // wait until the sourceBuffer is primed with the initialization
-            // before loading contentType
-            this.vsourceBuffer.addEventListener("updateend", this.loadSegment.bind(this));
-        }).bind(this);
-        request.send();
-    }
-
-    onSourceClosed () {
-
-    }
-
-    loadSegment () {
-        //if (Math.abs(this.asegNum - this.segNum) > 2) return;
-        if (this.segNum < this.maxSegNum) {
-            this.getSegment();
-            this.segNum++;
-        }
-    }
-
-    getSegment () {
-        let request = new XMLHttpRequest(),
-            segmentURL = "http://www-itec.uni-klu.ac.at/ftp/datasets/mmsys13/video/redbull_6sec/2000kbps/redbull_720p_2000kbps_6sec_segment" + this.segNum + ".m4s";
-            //segmentURL = "http://dash.edgesuite.net/envivio/Envivio-dash2/v3_257-270146-i-" + this.segNum + ".m4s";
-
-
-        console.log("Getting segment: " + segmentURL);
-        request.responseType = "arraybuffer";
-        request.open("GET", segmentURL, true);
-        request.onload = (function () {
-            let array = new Uint8Array(request.response);
-            this.vsourceBuffer.appendBuffer(array);
-        }).bind(this);
-        request.send();
-    }
-
-    play () {
-
-    }
-}
-*/
 export default Yoda;
