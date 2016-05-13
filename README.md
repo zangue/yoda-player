@@ -23,7 +23,7 @@ gulp make
 Basic Usage
 -----------
 
-You will to create a video element within your HTML and assign it an id. Then add
+You will need to create a video element within your HTML and assign it an id. Then add
 the player and initialize it
 
 ```html
