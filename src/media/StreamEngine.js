@@ -16,6 +16,7 @@ class StreamEngine {
         this.mediaInfo = DashDriver.getMediaInfoFor(this.mediaType);
         this.playbackStarted = false;
         this.abrManager = new ABRManager();
+        this.hasStarted = false;
     }
 
     // subscribe event on fragment loaded
@@ -26,7 +27,7 @@ class StreamEngine {
 
         EventBus.subscribe(Events.FRAGMENT_LOADED, this.onFragmentLoaded, this);
         EventBus.subscribe(Events.PLAYBACK_PAUSED, this.onPlaybackPaused, this);
-        EventBus.subscribe(Events.PLAYBACK_RESUMED, this.onPlaybackResumed, this);
+        EventBus.subscribe(Events.PLAYBACK_PLAY, this.onPlaybackPlay, this);
         EventBus.subscribe(Events.PLAYBACK_SEEKING, this.onPlaybackSeeking, this);
         EventBus.subscribe(Events.PLAYBACK_SEEKED, this.onPlaybackSeeked, this);
         EventBus.subscribe(Events.PLAYBACK_STALLED, this.onPlaybackStalled, this);
@@ -36,6 +37,7 @@ class StreamEngine {
 
     start () {
         console.log("Stream Engine starting for " + this.mediaType);
+        this.hasStarted = true;
         this.scheduleInit();
     }
 
@@ -49,6 +51,7 @@ class StreamEngine {
         let bitrate;
 
         bitrate = this.mediaInfo.bitrates[this.mediaInfo.bitrates.length-1];
+        //bitrate = this.mediaInfo.bitrates[0];
         //initRep = this.abrManager.getNextRepresentation(this.mediaInfo);
         initRep = DashDriver.getRepresentationForBitrate(this.mediaType, bitrate);
         console.log("get init request for bitrate: " + initRep.bandwidth);
@@ -60,7 +63,7 @@ class StreamEngine {
     scheduleNext () {
         let nextRep;
         let nextRequest;
-
+        console.dir(this.mediaInfo);
         nextRep = this.abrManager.getNextRepresentation(this.mediaInfo);
         nextRequest = this.indexHandler.getNextRequest(nextRep);
 
@@ -113,8 +116,12 @@ class StreamEngine {
 
     }
 
-    onPlaybackResumed (data) {
-
+    onPlaybackPlay (data) {
+        console.log("[StreamEngine] [" + this.mediaType + "] " + "On play");
+        if (this.hasStarted === false) {
+            this.start();
+            return;
+        }
     }
 
     onPlaybackSeeking (data) {
@@ -126,21 +133,23 @@ class StreamEngine {
     }
 
     onPlaybackStalled (data) {
-
+        console.log("[StreamEngine] [" + this.mediaType + "] " + "On stalled");
+        if (this.hasStarted === false)
+            return;
     }
 
     onPlaybackEnded (data) {
-
+        console.log("[StreamEngine] [" + this.mediaType + "] " + "On playback ended");
     }
 
     onPlaybackCanPlayThrough (data) {
-
+        console.log("[StreamEngine] [" + this.mediaType + "] " + "On playback can play through");
     }
 
     reset () {
         EventBus.unsubscribe(Events.FRAGMENT_LOADED, this.onFragmentLoaded, this);
         EventBus.unsubscribe(Events.PLAYBACK_PAUSED, this.onPlaybackPaused, this);
-        EventBus.unsubscribe(Events.PLAYBACK_RESUMED, this.onPlaybackResumed, this);
+        EventBus.unsubscribe(Events.PLAYBACK_PLAY, this.onPlaybackPlay, this);
         EventBus.unsubscribe(Events.PLAYBACK_SEEKING, this.onPlaybackSeeking, this);
         EventBus.unsubscribe(Events.PLAYBACK_SEEKED, this.onPlaybackSeeked, this);
         EventBus.unsubscribe(Events.PLAYBACK_STALLED, this.onPlaybackStalled, this);

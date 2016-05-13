@@ -14,6 +14,7 @@ class Yoda {
         this.video = null;
         this.mediaSource = null;
         this.manifest = null;
+        this.autoPlay = false;
     }
 
     setup () {
@@ -142,7 +143,7 @@ class Yoda {
 
 
     /**
-     * initialize and start streams
+     * initialize and start streams on autoPlay true
      */
     onSourceOpened () {
         console.log("Source is open");
@@ -152,10 +153,26 @@ class Yoda {
         streamEngines.push(this.initializeStream('audio', this.getCodecForType('audio')));
 
         streamEngines.forEach(se => {
-            if (se) {
+            if (se && this.autoPlay) {
                 se.start();
             }
         });
+    }
+
+    /**
+     * Configure the player whether to start playback on load or not
+     * @param {Boolean} value
+     */
+    setAutoPlay (value) {
+        this.autoPlay = value;
+    }
+
+    /**
+     * Get the auto-play config value
+     * @return {Boolean}
+     */
+    getAutoPlay () {
+        return this.autoPlay;
     }
 
     reset () {
