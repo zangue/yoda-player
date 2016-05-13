@@ -1,9 +1,8 @@
 import FragmentLoader from "./http/FragmentLoader.js";
 import ABRManager from "./manager/ABRManager.js";
 import BufferManager from "./manager/BufferManager.js";
-import FragmentManager from "./manager/FragmentManager.js";
 import DashDriver from "../dash/DashDriver.js";
-import IndexHandler from "../dash/IndexHandler.js";
+import IndexHandlerFactory from "../dash/IndexHandlerFactory.js";
 import EventBus from "../lib/EventBus.js";
 import Events from "./Events.js";
 
@@ -12,16 +11,19 @@ class StreamEngine {
         this.mediaType = mediaType;
         this.bufferManager = bufferManager;
         this.element = videoElement;
-        this.fragmentManager = new FragmentManager();
+        this.indexHandler = IndexHandlerFactory.create(this.mediaType);
         this.fragmentLoader = new FragmentLoader();
         this.mediaInfo = DashDriver.getMediaInfoFor(this.mediaType);
         this.playbackStarted = false;
-        //let rep = this.dash.getRepresentationForBitrate("video", mediaInfo.bitrates[0], manifest);
-        //let urlList = this.dash.getSegments(rep);
+        this.abrManager = new ABRManager();
     }
 
-    // suscribe event on fragment loaded
+    // subscribe event on fragment loaded
     setup () {
+        console.log("Stream Engine setup for " + this.mediaType);
+        this.indexHandler.setup();
+        this.abrManager.setup();
+
         EventBus.subscribe(Events.FRAGMENT_LOADED, this.onFragmentLoaded, this);
         EventBus.subscribe(Events.PLAYBACK_PAUSED, this.onPlaybackPaused, this);
         EventBus.subscribe(Events.PLAYBACK_RESUMED, this.onPlaybackResumed, this);
@@ -33,36 +35,53 @@ class StreamEngine {
     }
 
     start () {
-        let initRequest;
         console.log("Stream Engine starting for " + this.mediaType);
-        // request init fragment and load it
-        console.log("get init request for bitrate: " + this.mediaInfo.bitrates[0]);
-        initRequest = this.fragmentManager.getInitRequest(this.mediaType, this.mediaInfo.bitrates[0]);
-        //console.dir(initRequest);
+        this.scheduleInit();
+    }
+
+    stop () {
+
+    }
+
+    scheduleInit () {
+        let initRequest;
+        let initRep;
+        let bitrate;
+
+        bitrate = this.mediaInfo.bitrates[this.mediaInfo.bitrates.length-1];
+        //initRep = this.abrManager.getNextRepresentation(this.mediaInfo);
+        initRep = DashDriver.getRepresentationForBitrate(this.mediaType, bitrate);
+        console.log("get init request for bitrate: " + initRep.bandwidth);
+        initRequest = this.indexHandler.getInitRequest(initRep);
+        console.dir(initRequest);
         this.fragmentLoader.load(initRequest);
     }
 
     scheduleNext () {
-        // TODO - Add event onAppend to will also cause scheduleNext to be called
-        // at the moment should buffer more will just return true
-        if (!this.bufferManager.shouldBuffer())
-            return;
+        let nextRep;
+        let nextRequest;
 
-        // TODO - Ask ABRManager for available bandwidth then choose the closest bitrate to request next fragment
-        let nextRequest = this.fragmentManager.getNextRequest(this.mediaType, this.mediaInfo.bitrates[0]);
+        nextRep = this.abrManager.getNextRepresentation(this.mediaInfo);
+        nextRequest = this.indexHandler.getNextRequest(nextRep);
 
         // All segment has alredy been loaded
         if (!nextRequest)
             return;
 
-        this.fragmentLoader.load(nextRequest);
+        // TODO - Add event onAppend to will also cause scheduleNext to be called
+        // at the moment should buffer more will just return true
+        if (!this.bufferManager.shouldBuffer())
+             return;
 
+        console.dir(nextRequest);
+        this.fragmentLoader.load(nextRequest);
     }
 
+    // TODO - suscribe event
     // See if we stopped because buffer were full and
     // schedule next segments if there some place now
     onFragmentAppended (data) {
-        scheduleNext();
+        this.scheduleNext();
     }
 
     onFragmentLoaded (data) {
