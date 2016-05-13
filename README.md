@@ -1,7 +1,7 @@
 YODA PLAYER
 ===========
 
-YODA player (**Y**et an**O**ther **D**ASH player) is a client implementation for
+YODA player (**Y**et an**O**ther **DA**SH player) is a client implementation for
 playback of MPEG-DASH in compliant browser environments.
 
 Build
