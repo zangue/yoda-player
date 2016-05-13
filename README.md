@@ -53,5 +53,5 @@ the player and initialize it
 License
 -------
 
-This software is being made under the terms of the MIT license. Please see the
-LICENSE.md file in this directory.
+This software is being available made under the terms of the MIT license. Please
+refer to the LICENSE.md file within this directory.
