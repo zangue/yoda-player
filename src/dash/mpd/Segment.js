@@ -10,6 +10,8 @@ class Segment {
         this.availabilityTimeComplete = null;
         this.initialization = null;
         this.representationIndex = null;
+        this.duration = null;
+        this.startNumber = null;
         // Segment Template
         this.media = null;
         this.index = null;
