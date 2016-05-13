@@ -26,7 +26,7 @@ Basic Usage
 You will to create a video element within your HTML and assign it an id. Then add
 the player and initialize it
 
-```
+```html
 <!doctype html>
 
 <html lang="en">
