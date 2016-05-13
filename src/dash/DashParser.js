@@ -2,6 +2,7 @@ import MPD from "./mpd/MPD.js";
 import Period from "./mpd/Period.js";
 import AdaptationSet from "./mpd/AdaptationSet.js";
 import Representation from "./mpd/Representation.js";
+import ContentComponent from "./mpd/ContentComponent.js";
 import BaseUrl from "./mpd/BaseUrl.js";
 import Initialization from "./mpd/Initialization.js";
 import RepresentationIndex from "./mpd/RepresentationIndex.js";
@@ -101,8 +102,10 @@ class DashParser {
         seg.indexRangeExact = this.parseAttribute(node, "indexRangeExact");
         seg.availabilityTimeOffset = this.parseAttribute(node, "availabilityTimeOffset");
         seg.availabilityTimeComplete = this.parseAttribute(node, "availabilityTimeComplete");
-        seg.initialization = this.parseInitialization(node);
-        seg.representationIndex = this.parseRepresentationIndex(node);
+        seg.startNumber = this.parseAttribute(node, "startNumber");
+        seg.duration = this.parseAttribute(node, "duration");
+        seg.initialization = this.parseInitialization(node, "initialization");
+        seg.representationIndex = this.parseRepresentationIndex(node, "representationIndex");
 
         // Segment Template and URL
         if (type == "SegmentTemplate" || type == "SegmentURL") {
@@ -110,6 +113,7 @@ class DashParser {
             seg.mediaRange = this.parseAttribute(node, "mediaRange");
             seg.index = this.parseAttribute(node, "index");
             seg.indexRange = this.parseAttribute(node, "indexRange");
+            seg.initialization = this.parseAttribute(node, "initialization");
         }
 
         // Segment List information
@@ -141,10 +145,10 @@ class DashParser {
     parseContentComponent (node) {
         let cc = new ContentComponent();
 
-        this.id = this.parseAttribute(node, "id");
-        this.lang = this.parseAttribute(node, "lang");
-        this.contentType = this.parseAttribute(node, "contentType");
-        this.par = this.parseAttribute(node, "accessibility");
+        cc.id = this.parseAttribute(node, "id");
+        cc.lang = this.parseAttribute(node, "lang");
+        cc.contentType = this.parseAttribute(node, "contentType");
+        cc.par = this.parseAttribute(node, "accessibility");
 
         // TODO - parse missing elements
 
@@ -165,6 +169,7 @@ class DashParser {
         representation = this.parseCommon(node, representation);
 
         // TODO
+        representation.baseUrls = this.parseChildren(node, "BaseURL", this.parseBaseUrl.bind(this));
         representation.segmentList = this.parseChildren(node, "SegmentList", this.parseSegment.bind(this));
         representation.segmentTemplate = this.parseChildren(node, "SegmentTemplate", this.parseSegment.bind(this));
         representation.segmentBase = this.parseChildren(node, "SegmentBase", this.parseSegment.bind(this));
@@ -200,6 +205,10 @@ class DashParser {
         as = this.parseCommon(node, as);
 
         as.contentComponents = this.parseChildren(node, "ContentComponent", this.parseContentComponent.bind(this));
+        as.baseUrls = this.parseChildren(node, "BaseURL", this.parseBaseUrl.bind(this));
+        as.segmentList = this.parseChildren(node, "SegmentList", this.parseSegment.bind(this));
+        as.segmentTemplate = this.parseChildren(node, "SegmentTemplate", this.parseSegment.bind(this));
+        as.segmentBase = this.parseChildren(node, "SegmentBase", this.parseSegment.bind(this));
         as.representations = this.parseChildren(node, "Representation", this.parseRepresentation.bind(this));
 
         // TODO - parse missing elements
@@ -245,7 +254,7 @@ class DashParser {
         mpd.mediaPresentationDuration = this.parseAttribute(node, "mediaPresentationDuration");
         mpd.minimumUpdatePeriod = this.parseAttribute(node, "minimumUpdatePeriod");
         mpd.minBufferTime = this.parseAttribute(node, "minBufferTime");
-        mpd.timeShiftBufferDepth = this.parseAttribute(node, "timeShiftBufferDepth") || Infinity;
+        mpd.timeShiftBufferDepth = this.parseAttribute(node, "timeShiftBufferDepth");
         mpd.suggestedPresentationDelay = this.parseAttribute(node, "suggestedPresentationDelay");
         mpd.maxSegmentDuration = this.parseAttribute(node, "maxSegmentDuration");
         mpd.maxSubSegmentDuration = this.parseAttribute(node, "maxSubSegmentDuration");
