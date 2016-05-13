@@ -49,3 +49,9 @@ the player and initialize it
 </body>
 </html>
 ```
+
+License
+-------
+
+This software is being made under the terms of the MIT license. Please see the
+LICENSE.md file in this directory.
