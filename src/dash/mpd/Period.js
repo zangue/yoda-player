@@ -1,5 +1,6 @@
 class Period {
     constructor () {
+        this.mpd = null; // parent
         this.xlinkHref = null;
         this.xlinkActuate = null;
         this.id = null;
@@ -14,6 +15,10 @@ class Period {
         this.eventStreams = [];
         this.adaptationSets = [];
         this.subsets = [];
+    }
+
+    setParent (parent) {
+        this.mpd = parent;
     }
 }
 

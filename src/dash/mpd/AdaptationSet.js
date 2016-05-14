@@ -3,6 +3,7 @@ import MpdCommon from "./MpdCommon.js";
 class AdaptationSet extends MpdCommon {
     constructor () {
         super();
+        this.period = null; // parent
         this.xlinkHref = null;
         this.xlinkActuate = null;
         this.id = null;
@@ -32,6 +33,10 @@ class AdaptationSet extends MpdCommon {
         this.segmentList = null;
         this.segmentTemplate = null;
         this.representations = [];
+    }
+
+    setParent (parent) {
+        this.period = parent;
     }
 }
 
