@@ -29,6 +29,18 @@ class DashParser {
         return parsedChildren;
     }
 
+    addParsedChildrensParent (children, parent) {
+        let i,
+            updatedChildren = [];
+
+        for (i = 0; i < children.length; i++) {
+            children[i].setParent(parent);
+            updatedChildren.push(children[i]);
+        }
+
+        return updatedChildren;
+    }
+
     parseCommon(node, element) {
         element.profiles = this.parseAttribute(node, "profiles");
         element.width = this.parseAttribute(node, "width");
@@ -213,6 +225,9 @@ class DashParser {
 
         // TODO - parse missing elements
 
+        // add parent to representations
+        as.representations = this.addParsedChildrensParent(as.representations, as);
+
         return as;
     }
 
@@ -235,8 +250,11 @@ class DashParser {
 
         // TODO - parse segment{Base,List,Template}
         //this.segmentBase = this.parseSegmentBase(node);
-        this.segmentList = this.parseChildren(node, "SegmentList", this.parseSegment.bind(this));
-        this.segmentTemplate = this.parseChildren(node, "SegmentTemplate", this.parseSegment.bind(this));
+        period.segmentList = this.parseChildren(node, "SegmentList", this.parseSegment.bind(this));
+        period.segmentTemplate = this.parseChildren(node, "SegmentTemplate", this.parseSegment.bind(this));
+
+        // Add parent to adaptation sets
+        period.adaptationSets = this.addParsedChildrensParent(period.adaptationSets, period);
 
         return period;
     }
@@ -264,6 +282,9 @@ class DashParser {
         mpd.locations = this.parseChildren(node, "Location", this.parseLocation.bind(this));
         mpd.periods = this.parseChildren(node, "Period", this.parsePeriod.bind(this));
         mpd.metrics = this.parseChildren(node, "Mectrics", this.parseMectrics.bind(this));
+
+        // Add parent to periods
+        mpd.periods = this.addParsedChildrensParent(mpd.periods, mpd);
 
         return mpd;
     }
