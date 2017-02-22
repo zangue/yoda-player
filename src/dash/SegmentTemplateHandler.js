@@ -1,21 +1,26 @@
 import DashDriver from "./DashDriver.js";
 import Request from "../media/objects/Request.js";
+import IndexHandler from "./IndexHandler.js";
 
-class SegmentTemplateHandler {
+class SegmentTemplateHandler extends IndexHandler {
 
     constructor (mediaType) {
-        this.mediaType = mediaType;
+        super(mediaType);
         this.mediaTemplate = "";
         this.initMediaTemplate = "";
-        this.index = NaN;
     }
 
     setup () {
-        let as = DashDriver.getAdaptationSetForType(this.mediaType);
+        let as;
+
+        super.setup();
+
+        as = DashDriver.getAdaptationSetForType(this.mediaType);
 
         this.initMediaTemplate = as.segmentTemplate[0].initialization;
         this.mediaTemplate = as.segmentTemplate[0].media;
-        this.index = parseInt(as.segmentTemplate[0].startNumber) || 1;
+        this.startIndex = parseInt(as.segmentTemplate[0].startNumber) || 1;
+        this.index = this.startIndex;
     }
 
     _resolveUrlTemplate (template, representation) {
@@ -26,7 +31,7 @@ class SegmentTemplateHandler {
         return template;
     }
 
-    _buildSegmentRequest (representation, url, init) {
+    _buildSegmentRequest (representation, url, isInit) {
         let request = new Request();
 
         request.mediaType = this.mediaType;
@@ -36,7 +41,7 @@ class SegmentTemplateHandler {
         request.responseType = 'arraybuffer';
         request.method = 'GET';
         request.async = true;
-        request.init = init;
+        request.isInit = isInit;
 
         console.log("next request: " + request.url);
 
@@ -53,17 +58,26 @@ class SegmentTemplateHandler {
     }
 
     getNextRequest (representation) {
-        let url = DashDriver.getBaseUrl() + this.mediaTemplate;
+        let url, request;
 
-        url = this._resolveUrlTemplate(url, representation);
+        if (this.lastLoadedindex === this.index)
+            request = null;
+        else {        
+            url = DashDriver.getBaseUrl() + this.mediaTemplate;
+            url = this._resolveUrlTemplate(url, representation);
 
-        this.index++;
+            request = this._buildSegmentRequest(representation, url, false);
+        }
 
-        return this._buildSegmentRequest(representation, url, false);
+        return request;
     }
 
     getRequestForTime (representation, time) {
 
+    }
+
+    handleSeek (targetTime, mediaInfos) {
+        
     }
 
 }

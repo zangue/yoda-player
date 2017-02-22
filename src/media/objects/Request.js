@@ -8,7 +8,7 @@ class Request {
         this.responseType = null;
         this.method = null;
         this.async = null;
-        this.init = false;
+        this.isInit = false;
     }
 }
 

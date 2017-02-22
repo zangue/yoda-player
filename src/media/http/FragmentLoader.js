@@ -21,7 +21,8 @@ class FragmentLoader {
 
                 fragment.mediaType = request.mediaType;
                 fragment.dataChunk = xhr.response;
-                fragment.init = request.init;
+                fragment.index = request.index;
+                fragment.isInit = request.isInit;
 
                 EventBus.broadcast(
                     Events.FRAGMENT_LOADED, {
