@@ -99,7 +99,7 @@ class Yoda {
             console.log(type + 'Codec (' + codec + ') is ' + this.supportCodec(codec) + ' supported.');
             sourceBuffer = this.mediaSource.addSourceBuffer(codec);
 
-            bufferManager = new BufferManager(type, sourceBuffer);
+            bufferManager = new BufferManager(type, sourceBuffer, this.video);
             bufferManager.setup();
 
             streamEngine = new StreamEngine(type, bufferManager, this.video);
