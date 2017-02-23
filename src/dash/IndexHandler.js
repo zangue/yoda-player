@@ -8,6 +8,8 @@ class IndexHandler {
         this.startIndex = null;
         this.lastLoadedIndex = null;
         this.index = null;
+        this.segmentDuration = null;
+        this.timescale = null;
     }
 
     setup () {

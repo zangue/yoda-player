@@ -13,14 +13,17 @@ class VideoTag {
         this._video = document.querySelector(id);
 
         this._mediaEvents = {
-            "play": this.onPlay,
-            "pause": this.onPause,
-            "seeking": this.onSeeking, // sent when the seeking operation begins
-            "seeked": this.onSeeked, // sent when the seeking operation stopped
-            "stalled": this.onStalled,
-            "ended": this.onEnded,
-            "canplaythrough": this.onCanPlayThrough
+            "play": this.onPlay.bind(this),
+            "pause": this.onPause.bind(this),
+            "seeking": this.onSeeking.bind(this), // sent when the seeking operation begins
+            "seeked": this.onSeeked.bind(this), // sent when the seeking operation stopped
+            "stalled": this.onStalled.bind(this),
+            "ended": this.onEnded.bind(this),
+            "canplaythrough": this.onCanPlayThrough.bind(this),
+            "timeupdate": this.onTimeUpdated.bind(this)
         };
+
+        this.lastTimeUpdateValue = NaN;
     }
 
     setup () {
@@ -110,16 +113,16 @@ class VideoTag {
         console.log("on seeking");
         EventBus.broadcast(
             Events.PLAYBACK_SEEKING, {
-                data: null
+                time: this._video.currentTime
             }
         );
     }
 
-    onSeeked () {
+    onSeeked (e) {
         console.log("on seeked");
         EventBus.broadcast(
             Events.PLAYBACK_SEEKED, {
-                data: null
+                time: this._video.currentTime
             }
         );
     }
@@ -149,6 +152,32 @@ class VideoTag {
                 data: null
             }
         );
+    }
+
+    onTimeUpdated (e) {
+        console.log("on timeupdate");
+
+        if (!this._video) return;
+
+        let currentTime = this._video.currentTime;
+
+        if (isNaN(this.lastTimeUpdateValue))
+            this.lastTimeUpdateValue = currentTime;
+
+        if (this.lastTimeUpdateValue < currentTime) {
+            this.lastTimeUpdateValue = currentTime;
+            EventBus.broadcast(
+                Events.PLAYBACK_PROGRESS, {
+                    time: currentTime
+                }
+            );
+        }
+    }
+
+    reset () {
+        for (let event in this._mediaEvents) {
+            this._video.removeEventListener(event, this._mediaEvents[event]);
+        }
     }
 }
 

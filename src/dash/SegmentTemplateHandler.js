@@ -21,6 +21,13 @@ class SegmentTemplateHandler extends IndexHandler {
         this.mediaTemplate = as.segmentTemplate[0].media;
         this.startIndex = parseInt(as.segmentTemplate[0].startNumber) || 1;
         this.index = this.startIndex;
+
+        this.segmentDuration = as.segmentTemplate[0].duration;
+
+        if (!this.segmentDuration)
+            throw new Error("Could not find segment duration information!");
+
+        this.timescale = as.segmentTemplate[0].timescale || 1;
     }
 
     _resolveUrlTemplate (template, representation) {
@@ -72,12 +79,10 @@ class SegmentTemplateHandler extends IndexHandler {
         return request;
     }
 
-    getRequestForTime (representation, time) {
+    handleSeek (targetTime) {
+        let segDuration = this.segmentDuration / this.timescale;
 
-    }
-
-    handleSeek (targetTime, mediaInfos) {
-        
+        this.index = Math.ceil(targetTime/segDuration) + this.startIndex;
     }
 
 }

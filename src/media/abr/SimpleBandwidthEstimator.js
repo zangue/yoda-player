@@ -2,7 +2,7 @@ import EventBus from "../../lib/EventBus.js";
 import Events from "../Events.js";
 import MetricsManager from "../manager/MetricsManager.js";
 
-const SAMPLE_AMOUNT = 3;
+const SAMPLE_AMOUNT = 2;
 const DEFAULT_ESTIMATE = 5e5; //500kbps
 
 class SimpleBandwidthEstimator {

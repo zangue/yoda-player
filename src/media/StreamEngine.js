@@ -1,22 +1,26 @@
 import FragmentLoader from "./http/FragmentLoader.js";
 import ABRManager from "./manager/ABRManager.js";
 import BufferManager from "./manager/BufferManager.js";
+import MetricsManager from "./manager/MetricsManager.js";
 import DashDriver from "../dash/DashDriver.js";
 import IndexHandlerFactory from "../dash/IndexHandlerFactory.js";
+import BufferLevel from "./objects/metrics/BufferLevel.js";
 import EventBus from "../lib/EventBus.js";
 import Events from "./Events.js";
 
 class StreamEngine {
-    constructor (mediaType, bufferManager, videoElement) {
+    constructor (mediaType, bufferManager, videoTag) {
         this.mediaType = mediaType;
         this.bufferManager = bufferManager;
-        this.element = videoElement;
+        this.videoTag = videoTag;
         this.indexHandler = IndexHandlerFactory.create(this.mediaType);
         this.fragmentLoader = new FragmentLoader();
         this.mediaInfo = DashDriver.getMediaInfoFor(this.mediaType);
         this.playbackStarted = false;
         this.abrManager = new ABRManager();
         this.hasStarted = false;
+        this.isIdle = false;
+        this.scheduleWhilePaused = true;
         this.lastLoadedRepresentation = null;
     }
 
@@ -35,6 +39,7 @@ class StreamEngine {
         EventBus.subscribe(Events.PLAYBACK_ENDED, this.onPlaybackEnded, this);
         EventBus.subscribe(Events.PLAYBACK_CANPLAYTHROUGH, this.onPlaybackCanPlayThrough, this);
         EventBus.subscribe(Events.INIT_REQUESTED, this.onInitRequested, this);
+        EventBus.subscribe(Events.PLAYBACK_PROGRESS, this.onPlaybackProgress, this);
     }
 
     start () {
@@ -44,6 +49,7 @@ class StreamEngine {
     }
 
     stop () {
+        console.log("Stream Engine stopping for " + this.mediaType);
         this.hasStarted = false;
     }
 
@@ -62,11 +68,14 @@ class StreamEngine {
     scheduleNext () {
         let nextRep;
         let nextRequest, isInitRequired;
+        let isPaused = this.videoTag.getElement().paused;
 
         console.dir(this.mediaInfo);
 
-        if (!this.bufferManager.shouldBufferMore() ||
-            this.fragmentLoader.isLoading)
+        this.isIdle = !this.bufferManager.shouldBufferMore();
+
+        if (this.isIdle || this.fragmentLoader.isLoading ||
+            isPaused && !this.scheduleWhilePaused)
              return;
 
         nextRep = this.abrManager.getNextRepresentation(this.mediaInfo);
@@ -81,12 +90,24 @@ class StreamEngine {
 
     }
 
+    updateBufferLevelMetrics () {
+        let bl, level;
+
+        bl = new BufferLevel();
+        level = this.bufferManager.bufferLevel;
+
+        bl.t = new Date();
+        bl.levelMilli = level * 1000;
+
+        MetricsManager.addBufferLevel(bl);
+    }
+
     // TODO - suscribe event
     // See if we stopped because buffer were full and
     // schedule next segments if there some place now
-    onFragmentAppended (data) {
-        this.scheduleNext();
-    }
+    //onFragmentAppended (data) {
+    //    this.scheduleNext();
+    //}
 
     onFragmentLoaded (data) {
         if (!data.fragment)
@@ -117,7 +138,8 @@ class StreamEngine {
     }
 
     onPlaybackPaused (data) {
-
+        if (!this.fragmentLoader.isLoading && !this.scheduleWhilePaused)
+            this.scheduleNext();
     }
 
     onPlaybackPlay (data) {
@@ -129,11 +151,22 @@ class StreamEngine {
     }
 
     onPlaybackSeeking (data) {
+        let seekTarget = this.videoTag.getElement().currentTime;
 
+        if (this.fragmentLoader.isLoading)
+            this.fragmentLoader.abort();
+
+        this.updateBufferLevelMetrics();
+        this.indexHandler.handleSeek(seekTarget);
+
+        if (this.isIdle) {
+            this.isIdle = false;
+        }
+
+        this.scheduleNext();
     }
 
     onPlaybackSeeked (data) {
-
     }
 
     onPlaybackStalled (data) {
@@ -144,10 +177,20 @@ class StreamEngine {
 
     onPlaybackEnded (data) {
         console.log("[StreamEngine] [" + this.mediaType + "] " + "On playback ended");
+        this.stop();
     }
 
     onPlaybackCanPlayThrough (data) {
         console.log("[StreamEngine] [" + this.mediaType + "] " + "On playback can play through");
+        this.stop();
+    }
+
+    onPlaybackProgress (e) {
+        this.updateBufferLevelMetrics();
+
+        if (this.isIdle) {
+            this.scheduleNext();
+        }
     }
 
     reset () {
@@ -160,10 +203,12 @@ class StreamEngine {
         EventBus.unsubscribe(Events.PLAYBACK_ENDED, this.onPlaybackEnded, this);
         EventBus.unsubscribe(Events.PLAYBACK_CANPLAYTHROUGH, this.onPlaybackCanPlayThrough, this);
         EventBus.unsubscribe(Events.INIT_REQUESTED, this.onInitRequested, this);
+        EventBus.unsubscribe(Events.PLAYBACK_PROGRESS, this.onPlaybackProgress, this);
 
         this.playbackStarted = false;
         this.hasStarted = false;
         this.lastLoadedRepresentation = null;
+        this.isIdle = false;
         this.indexHandler.reset();
 
         this.setup();

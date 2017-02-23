@@ -10,7 +10,24 @@ class SegmentListHandler extends IndexHandler {
 
     setup () {
         super.setup();
+        let as = DashDriver.getAdaptationSetForType(this.mediaType);
+
         this.index = this.startIndex = 0;
+
+        if (as.segmentList[0])
+            if (as.segmentList[0].duration) {
+                this.segmentDuration = as.segmentList[0].duration;
+                this.timescale = as.segmentList[0].timescale || 1;
+            }
+
+        // reprsentation settings override adaptation set level settings
+        if (as.representations[0].segmentList[0].duration) {
+            this.segmentDuration = as.representations[0].segmentList[0].duration;
+            this.timescale = as.representations[0].segmentList[0].timescale || 1;
+        }
+
+        if (!this.segmentDuration)
+            throw new Error("Could not find segment duration information!");
     }
 
     _buildSegmentRequest (representation, url, isInit) {
@@ -41,6 +58,10 @@ class SegmentListHandler extends IndexHandler {
         // reprsentation settings override adaptation set level settings
         if (representation.segmentList[0].initialization)
             url = representation.segmentList[0].initialization.sourceURL;
+        else if (representation.segmentBase[0])
+            url = representation.segmentBase[0].initialization.sourceURL;
+        else
+            throw new Error("Couldnt find initialization!");
 
         url = DashDriver.getBaseUrl() + url;
 
@@ -61,8 +82,10 @@ class SegmentListHandler extends IndexHandler {
         return request;
     }
 
-    getRequestForTime (representation, time) {
+    handleSeek (targetTime) {
+        let segDuration = this.segmentDuration / this.timescale;
 
+        this.index = Math.ceil(targetTime/segDuration) - this.startIndex;
     }
 
 }

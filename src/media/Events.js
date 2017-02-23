@@ -8,6 +8,7 @@ class Events {
         this.PLAYBACK_STALLED = "stalled";
         this.PLAYBACK_ENDED = "ended";
         this.PLAYBACK_CANPLAYTHROUGH = "canplaythrough";
+        this.PLAYBACK_PROGRESS  = "timeupdate";
 
         // ManifestLoader
         this.MANIFEST_LOADED = "manifestLoaded";

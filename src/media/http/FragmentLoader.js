@@ -70,6 +70,7 @@ class FragmentLoader {
 
     abort () {
         this.xhrHandler.abort();
+        this.isLoading = false;
     }
 
 }
