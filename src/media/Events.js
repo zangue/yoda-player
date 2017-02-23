@@ -15,6 +15,9 @@ class Events {
         // FragmentLoader
         this.FRAGMENT_LOADED = "fragmentLoaded";
         this.FRAGMENT_PROGRESS = "fragmentProgress";
+
+        // BufferManager
+        this.INIT_REQUESTED = "initRequested";
     }
 }
 

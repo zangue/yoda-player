@@ -8,12 +8,18 @@ class FragmentLoader {
 
     constructor () {
         this.xhrHandler = new XHR();
+        this.isLoading = false;
     }
 
     load (request) {
         let callbacks = {};
+        let self = this;
+
+        this.isLoading = true;
 
         callbacks.onload = function (xhr) {
+            self.isLoading = false;
+
             if (xhr.status >= 200 && xhr.status <= 299) {
                 console.log("Fragment Loaded success");
                 //console.dir(xhr);
@@ -22,6 +28,7 @@ class FragmentLoader {
                 fragment.mediaType = request.mediaType;
                 fragment.dataChunk = xhr.response;
                 fragment.index = request.index;
+                fragment.bitrate = request.bitrate;
                 fragment.isInit = request.isInit;
 
                 EventBus.broadcast(
@@ -42,6 +49,8 @@ class FragmentLoader {
         };
 
         callbacks.onerror = function (xhr) {
+            self.isLoading = false;
+
             console.log("Error");
             EventBus.broadcast(
                 Events.FRAGMENT_LOADED, {

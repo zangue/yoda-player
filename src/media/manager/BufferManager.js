@@ -1,4 +1,6 @@
 import DashDriver from "../../dash/DashDriver.js";
+import EventBus from "../../lib/EventBus.js";
+import Events from "../Events.js";
 
 // TODO
 // Each track can have its own @presentationTimeOffset, so we should set the offset
@@ -12,6 +14,8 @@ class BufferManager {
         this.sourceBuffer = sourceBuffer;
         this.videoTag = videoTag;
         this.manifestInfo = DashDriver.getManifestInfos();
+        this.lastAppendedChunk = null;
+        this.initCache = [];
         this.chunks = [];
     }
 
@@ -95,6 +99,7 @@ class BufferManager {
 
     AppendToSource() {
         let chunk, bytes;
+        let isInitRequested = false;
 
         if (this.chunks.length === 0) {
             return;
@@ -105,13 +110,31 @@ class BufferManager {
             return;
         }
 
-        chunk = this.chunks.shift();
+        if (this.lastAppendedChunk === null ||
+            this.lastAppendedChunk.bitrate !== this.chunks[0].bitrate) {
+            // We need to append init for the current representation first.
+            isInitRequested = true;
+            chunk = this.getInitFromCache(this.chunks[0].bitrate);
 
+            if (!chunk) {
+                EventBus.broadcast(
+                    Events.INIT_REQUESTED, {
+                        mediaType: this.mediaType,
+                        bitrate: this.chunks[0].bitrate
+                    }
+                );
+                return;
+            }
+        } else {
+            chunk = this.chunks.shift();
+        }
 
         console.log("\n\nappending to sourcebuffer\n\n");
 
         bytes = new Uint8Array(chunk.dataChunk);
         this.sourceBuffer.appendBuffer(bytes);
+
+        this.lastAppendedChunk = chunk;
     }
 
     canStartPlayback() {
@@ -123,7 +146,7 @@ class BufferManager {
     // Check buffer level againt minBufferTime or suggestedMinBufferTime
     // get dash manifest information
     // decide
-    shouldBuffer () {
+    shouldBufferMore () {
         return true;
     }
 
@@ -132,9 +155,41 @@ class BufferManager {
         this.AppendToSource();
     }
 
+    getInitFromCache (bitrate) {
+        let init = null;
+
+        for (let i = this.initCache.length - 1; i >= 0; i--) {
+            if (this.initCache[i].bitrate === bitrate) {
+                init = this.initCache[i];
+                break;
+            }
+        }
+
+        return init;
+    }
+
+    cacheInit (initChunk) {
+        let hit = false;
+
+        for (let i = this.initCache.length - 1; i >= 0; i--) {
+            if (this.initCache[i].bitrate === initChunk.bitrate) {
+                hit = true;
+                break;
+            }
+        }
+
+        if (!hit)
+            this.initCache.push(initChunk);
+
+        // Try append to source buffer in case we were waiting for an init segment
+        this.AppendToSource();
+    }
+
     reset() {
         this.chunks = [];
         this.sourceBuffer.removeEventListener("updateend", this.onSourceBufferUpdateEnd.bind(this), false);
+
+        this.setup();
     }
 }
 

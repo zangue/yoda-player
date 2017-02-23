@@ -85,6 +85,8 @@ class DashDriver {
             representation = null,
             i;
 
+            bitrate = parseInt(bitrate);
+
         for (i = 0; i < reps.length; i++) {
             let repBitrate = parseInt(reps[i].bandwidth);
 

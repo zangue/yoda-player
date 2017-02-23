@@ -17,6 +17,7 @@ class StreamEngine {
         this.playbackStarted = false;
         this.abrManager = new ABRManager();
         this.hasStarted = false;
+        this.lastLoadedRepresentation = null;
     }
 
     // subscribe event on fragment loaded
@@ -33,51 +34,51 @@ class StreamEngine {
         EventBus.subscribe(Events.PLAYBACK_STALLED, this.onPlaybackStalled, this);
         EventBus.subscribe(Events.PLAYBACK_ENDED, this.onPlaybackEnded, this);
         EventBus.subscribe(Events.PLAYBACK_CANPLAYTHROUGH, this.onPlaybackCanPlayThrough, this);
+        EventBus.subscribe(Events.INIT_REQUESTED, this.onInitRequested, this);
     }
 
     start () {
         console.log("Stream Engine starting for " + this.mediaType);
         this.hasStarted = true;
-        this.scheduleInit();
+        this.scheduleNext();
     }
 
     stop () {
-
+        this.hasStarted = false;
     }
 
-    scheduleInit () {
-        let initRequest;
-        let initRep;
-        let bitrate;
+    onInitRequested (e) {
+        let initRequest, initRep;
 
-        bitrate = this.mediaInfo.bitrates[this.mediaInfo.bitrates.length-1];
-        //bitrate = this.mediaInfo.bitrates[0];
-        //initRep = this.abrManager.getNextRepresentation(this.mediaInfo);
-        initRep = DashDriver.getRepresentationForBitrate(this.mediaType, bitrate);
-        console.log("get init request for bitrate: " + initRep.bandwidth);
+        if (e.mediaType !== this.mediaType)
+            return;
+
+        initRep =  DashDriver.getRepresentationForBitrate(this.mediaType, e.bitrate);
+
         initRequest = this.indexHandler.getInitRequest(initRep);
-        console.dir(initRequest);
         this.fragmentLoader.load(initRequest);
     }
 
     scheduleNext () {
         let nextRep;
-        let nextRequest;
+        let nextRequest, isInitRequired;
+
         console.dir(this.mediaInfo);
+
+        if (!this.bufferManager.shouldBufferMore() ||
+            this.fragmentLoader.isLoading)
+             return;
+
         nextRep = this.abrManager.getNextRepresentation(this.mediaInfo);
+   
         nextRequest = this.indexHandler.getNextRequest(nextRep);
 
-        // All segment has alredy been loaded
         if (!nextRequest)
             return;
 
-        // TODO - Add event onAppend to will also cause scheduleNext to be called
-        // at the moment should buffer more will just return true
-        if (!this.bufferManager.shouldBuffer())
-             return;
-
         console.dir(nextRequest);
         this.fragmentLoader.load(nextRequest);
+
     }
 
     // TODO - suscribe event
@@ -94,22 +95,25 @@ class StreamEngine {
         if (data.fragment.mediaType !== this.mediaType)
             return;
 
-        console.log("on Fragment Loaded!");
+        console.log("on Fragment Loaded! (" + this.mediaType + ")");
         //console.dir(data);
 
-        this.bufferManager.feedBuffer(data.fragment);
+        // FIXME
+        if (data.fragment.isInit)
+            this.bufferManager.cacheInit(data.fragment);
+        else {
+            this.bufferManager.feedBuffer(data.fragment);
+            this.lastLoadedRepresentation = DashDriver.getRepresentationForBitrate(this.mediaType, data.fragment.bitrate);
 
-        if (!this.playbackStarted) {
-            if (this.bufferManager.canStartPlayback()) {
-                this.bufferManager.AppendToSource(); // init request
-                this.bufferManager.setup();
-                this.playbackStarted = true;
+            if (!this.playbackStarted) {
+                if (this.bufferManager.canStartPlayback()) {
+                    this.bufferManager.setup();
+                    this.playbackStarted = true;
+                }
             }
         }
 
         this.scheduleNext();
-        // push data to buffer
-        // request schedule of next fragment
     }
 
     onPlaybackPaused (data) {
@@ -155,6 +159,13 @@ class StreamEngine {
         EventBus.unsubscribe(Events.PLAYBACK_STALLED, this.onPlaybackStalled, this);
         EventBus.unsubscribe(Events.PLAYBACK_ENDED, this.onPlaybackEnded, this);
         EventBus.unsubscribe(Events.PLAYBACK_CANPLAYTHROUGH, this.onPlaybackCanPlayThrough, this);
+        EventBus.unsubscribe(Events.INIT_REQUESTED, this.onInitRequested, this);
+
+        this.playbackStarted = false;
+        this.hasStarted = false;
+        this.lastLoadedRepresentation = null;
+        this.indexHandler.reset();
+
         this.setup();
     }
 }
