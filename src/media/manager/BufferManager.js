@@ -6,7 +6,7 @@ import Events from "../Events.js";
 // Each track can have its own @presentationTimeOffset, so we should set the offset
 // if it has changed after switching the quality or updating an mpd
 
-const MAX_BUFFER_AHEAD_LEVEL = 30;
+const MAX_BUFFER_AHEAD_LEVEL = 45;
 
 class BufferManager {
     constructor (mediaType, sourceBuffer, videoTag) {
@@ -22,10 +22,12 @@ class BufferManager {
     get bufferLevel () {
         let level = 0;
         let time = this.videoTag.getElement().currentTime;
-        let range = this.getBufferRange();
+        let range = this.getBufferRange(this.sourceBuffer, time);
 
         if (Boolean(range))
             level = range.end - time;
+
+        console.log("Current buffer level: " + level + " second(s)");
 
         return level;
     }
@@ -56,6 +58,7 @@ class BufferManager {
         try {
             ranges = buffer.buffered;
         } catch (ex) {
+            console.log(ex);
             return null;
         }
 
@@ -143,11 +146,8 @@ class BufferManager {
         return this.chunks.length >= (minBufferTime * 2);
     }
 
-    // Check buffer level againt minBufferTime or suggestedMinBufferTime
-    // get dash manifest information
-    // decide
     shouldBufferMore () {
-        return true;
+        return this.bufferLevel < MAX_BUFFER_AHEAD_LEVEL;
     }
 
     feedBuffer (chunk) {
