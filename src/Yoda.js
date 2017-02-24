@@ -21,15 +21,41 @@ class Yoda {
         let manifestLoader = new ManifestLoader();
 
         if (!this._config.mpd) {
-            throw "No source set!";
+            throw new Error("No source set!");
         }
 
         if (!this._config.id) {
-            throw "Video element ID is missing!";
+            throw new Error("Video element ID is missing!");
         }
 
-        EventBus.subscribe(Events.MANIFEST_LOADED, this.onManifestLoaded, this);
-        manifestLoader.load(this._config.mpd);
+        //EventBus.subscribe(Events.MANIFEST_LOADED, this.onManifestLoaded, this);
+
+        manifestLoader.load(this._config.mpd).then( (data) => {
+            console.log("Manifest Loaded");
+            let minfos;
+
+            this.parseManifest(data.manifest);
+            this.configureDriver();
+            this.createAndSetupVideo();
+
+            minfos = DashDriver.getManifestInfos();
+
+            if (minfos.type === "dynamic") {
+                console.log("Trying to play unsupported type: " + minfos.type);
+                throw new Error("Live Streaming is not suported!");
+            }
+
+            console.log("creating the media source object");
+
+            this.createMediaSource();
+            this.attachMediaSource();
+            this.setupMediaSource();
+
+            console.log("done");
+
+        }).catch( (error) => {
+            console.error('Error occurred!', error);
+        });
     }
 
     getBaseUrl () {
@@ -113,35 +139,6 @@ class Yoda {
         return streamEngine;
     }
 
-    onManifestLoaded (event) {
-        let minfos;
-
-        if (!event.manifest) {
-            console.log("onManifestLoaded: Could not load manifest file");
-            throw "Could not load manifest file";
-        }
-
-        console.log("Manifest Loadeddds");
-
-        this.parseManifest(event.manifest);
-        this.configureDriver();
-        this.createAndSetupVideo();
-
-        minfos = DashDriver.getManifestInfos();
-
-        if (minfos.type === "dynamic") {
-            console.log("Trying to play unsupported type: " + minfos.type);
-            throw "Live Streaming is not suported!";
-        }
-
-        console.log("creating the media source object");
-        this.createMediaSource();
-        this.attachMediaSource();
-        this.setupMediaSource();
-        console.log("done");
-    }
-
-
     /**
      * initialize and start streams on autoPlay true
      */
@@ -176,7 +173,9 @@ class Yoda {
     }
 
     reset () {
-        EventBus.unsubscribe(Events.MANIFEST_LOADED, this.onManifestLoaded, this);
+        //EventBus.unsubscribe(Events.MANIFEST_LOADED, this.onManifestLoaded, this);
+        this.mediaSource.removeEventListener("webkitsourceopen", this.onSourceOpened.bind(this), false);
+        this.mediaSource.removeEventListener("sourceopen", this.onSourceOpened.bind(this), false);
 
         this.setup();
     }

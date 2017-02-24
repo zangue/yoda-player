@@ -11,47 +11,52 @@ class ManifestLoader {
     }
 
     load (url) {
-        let request,
-            callbacks = {};
+        return new Promise((resolve, reject) => {
+            let request,
+                callbacks = {};
 
-        callbacks.onload = function (xhr) {
-            if (xhr.status >= 200 && xhr.status <= 299) {
-                console.log("Manifest Loaded success");
-                this._manifest = xhr.responseText;
+            callbacks.onload = function (xhr) {
+                if (xhr.status >= 200 && xhr.status <= 299) {
+                    console.log("Manifest Loaded success");
+                    this._manifest = xhr.responseText;
+                    EventBus.broadcast(
+                        Events.MANIFEST_LOADED, {
+                            manifest: this._manifest
+                        }
+                    );
+                    resolve({manifest: this._manifest});
+                } else {
+                    reject(new Error(xhr.statusText));
+                }
+            };
+
+            callbacks.onerror = function (xhr) {
+                console.log("Error");
                 EventBus.broadcast(
                     Events.MANIFEST_LOADED, {
-                        manifest: this._manifest
+                        manifest: null
                     }
                 );
+                reject(new Error("Error loading manifest ..."));
+            };
+
+            console.log("Loading manifest...");
+
+            request = new Request();
+
+            request.method = "GET";
+            request.mediaType = "text";
+            request.url = url;
+            request.async = true;
+            request.responseType = "text";
+
+            try {
+                this.xhrHandler.load(request, callbacks);
+            } catch (e) {
+                console.log("Something went wrong during http request: " + e.message);
+                reject(new Error(e.message));
             }
-        };
-
-        callbacks.onerror = function (xhr) {
-            console.log("Error");
-            EventBus.broadcast(
-                Events.MANIFEST_LOADED, {
-                    manifest: null
-                }
-            );
-        };
-
-        console.log("Loading manifest...");
-
-        request = new Request();
-
-        request.method = "GET";
-        request.mediaType = "text";
-        request.url = url;
-        request.async = true;
-        request.responseType = "text";
-
-
-        try {
-            this.xhrHandler.load(request, callbacks);
-        } catch (e) {
-            console.log("Something went wrong during http request: " + e.message);
-        }
-
+        });
     }
 
     abort () {
