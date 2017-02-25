@@ -49,6 +49,7 @@ class StreamEngine {
     }
 
     stop () {
+        console.trace();
         console.log("Stream Engine stopping for " + this.mediaType);
         this.hasStarted = false;
     }
@@ -74,7 +75,7 @@ class StreamEngine {
 
         this.isIdle = !this.bufferManager.shouldBufferMore();
 
-        if (this.isIdle || this.fragmentLoader.isLoading ||
+        if (this.isIdle || this.fragmentLoader.isLoading || !this.hasStarted ||
             isPaused && !this.scheduleWhilePaused)
              return;
 
@@ -182,7 +183,7 @@ class StreamEngine {
 
     onPlaybackCanPlayThrough (data) {
         console.log("[StreamEngine] [" + this.mediaType + "] " + "On playback can play through");
-        this.stop();
+        //this.stop();
     }
 
     onPlaybackProgress (e) {
