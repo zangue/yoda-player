@@ -17,7 +17,7 @@ class StreamEngine {
         this.fragmentLoader = new FragmentLoader();
         this.mediaInfo = DashDriver.getMediaInfoFor(this.mediaType);
         this.playbackStarted = false;
-        this.abrManager = new ABRManager();
+        this.abrManager = new ABRManager(mediaType);
         this.hasStarted = false;
         this.isIdle = false;
         this.scheduleWhilePaused = true;
@@ -159,6 +159,10 @@ class StreamEngine {
 
         this.updateBufferLevelMetrics();
         this.indexHandler.handleSeek(seekTarget);
+
+        // TODO - Check if seek time is contained into buffered range prior making
+        // decision to abort()
+        this.bufferManager.abort();
 
         if (this.isIdle) {
             this.isIdle = false;

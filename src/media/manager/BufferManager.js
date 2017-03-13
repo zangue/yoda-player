@@ -15,6 +15,7 @@ class BufferManager {
         this.videoTag = videoTag;
         this.manifestInfo = DashDriver.getManifestInfos();
         this.lastAppendedChunk = null;
+        this.reInit = false;
         this.initCache = [];
         this.chunks = [];
     }
@@ -22,7 +23,7 @@ class BufferManager {
     get bufferLevel () {
         let level = 0;
         let time = this.videoTag.getElement().currentTime;
-        let range = this.getBufferRange(this.sourceBuffer, time);
+        let range = this.getBufferRange(time);
 
         if (Boolean(range))
             level = range.end - time;
@@ -42,7 +43,7 @@ class BufferManager {
      * This method is stolen from dash.js player :P
      * @author dash-if
      */
-    getBufferRange(buffer, time, tolerance) {
+    getBufferRange(time, tolerance) {
         let ranges = null;
         let start = 0;
         let end = 0;
@@ -56,7 +57,7 @@ class BufferManager {
         let toler = (tolerance || 0.15);
 
         try {
-            ranges = buffer.buffered;
+            ranges = this.sourceBuffer.buffered;
         } catch (ex) {
             console.log(ex);
             return null;
@@ -91,7 +92,13 @@ class BufferManager {
             if (firstStart !== null) {
                 return {start: firstStart, end: lastEnd};
             }
+        } else {
+            return null;
         }
+    }
+
+    removeBufferRange() {
+
     }
 
     // append next
@@ -113,10 +120,11 @@ class BufferManager {
             return;
         }
 
-        if (this.lastAppendedChunk === null ||
+        if (this.lastAppendedChunk === null || this.reInit ||
             this.lastAppendedChunk.bitrate !== this.chunks[0].bitrate) {
             // We need to append init for the current representation first.
             isInitRequested = true;
+            this.reInit = false;
             chunk = this.getInitFromCache(this.chunks[0].bitrate);
 
             if (!chunk) {
@@ -183,6 +191,21 @@ class BufferManager {
 
         // Try append to source buffer in case we were waiting for an init segment
         this.AppendToSource();
+    }
+
+    bufferContains (time) {
+        // TODO
+    }
+
+    abort () {
+        try {
+            this.sourceBuffer.abort();
+        } catch (e) {
+            console.log(e);
+        } finally {
+            this.chunks = [];
+            this.reInit = true;
+        }
     }
 
     reset() {
