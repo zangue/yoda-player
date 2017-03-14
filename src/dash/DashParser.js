@@ -107,7 +107,7 @@ class DashParser {
         //console.log("Parse segment: " + type);
 
         // Segment Base Information
-        seg.timescale = this.parseAttribute(node, "timescale");
+        seg.timescale = this.parseAttribute(node, "timescale") || 1;
         seg.presentationTimeOffset = this.parseAttribute(node, "presentationTimeOffset");
         seg.timeShiftBufferDepth = this.parseAttribute(node, "timeShiftBufferDepth");
         seg.indexRange = this.parseAttribute(node, "indexRange");

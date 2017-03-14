@@ -128,6 +128,30 @@ class DashDriver {
             mediaInfo.bitrates.push(parseInt(reps[i].bandwidth));
         }
 
+        if (this.hasSegmentTemplate(mediaType)) {
+            mediaInfo.segmentDuration = as.segmentTemplate[0].duration;
+            mediaInfo.timescale = as.segmentTemplate[0].timescale || 1;
+        } else if (this.hasSegmentList(mediaType)) {
+            mediaInfo.segmentDuration = as.segmentList[0].duration;
+            mediaInfo.timescale = as.segmentList[0].timescale || 1;
+
+            // reprsentation settings override adaptation set level settings
+            if (as.representations[0].segmentList[0].duration) {
+                mediaInfo.segmentDuration = as.representations[0].segmentList[0].duration;
+                mediaInfo.timescale = as.representations[0].segmentList[0].timescale || 1;
+            }
+        } else {
+            throw "Unknown or unsupported segment type";
+        }
+
+
+
+        console.log("§§§§§§§§§§§§§§§§§§§§§§");
+        console.log(as);
+        console.log(mediaInfo);
+        mediaInfo.segmentDuration = parseInt(mediaInfo.segmentDuration);
+        mediaInfo.timescale = parseInt(mediaInfo.timescale);
+
         return mediaInfo;
     }
 
