@@ -20,7 +20,8 @@ class VideoTag {
             "stalled": this.onStalled.bind(this),
             "ended": this.onEnded.bind(this),
             "canplaythrough": this.onCanPlayThrough.bind(this),
-            "timeupdate": this.onTimeUpdated.bind(this)
+            "timeupdate": this.onTimeUpdated.bind(this),
+            "ratechange": this.onRateChange.bind(this)
         };
 
         this.lastTimeUpdateValue = NaN;
@@ -90,6 +91,29 @@ class VideoTag {
         this._video.height = value;
     }
 
+    play () {
+        if (!this._video) return;
+
+        this._video.play();
+    }
+
+    pause () {
+        if (!this._video) return;
+
+        this._video.pause();
+    }
+
+    seek (time) {
+        if (!this._video || this._video.currentTime == time) return;
+
+        try {
+            this._video.currentTime = time;
+        } catch (e) {
+            console.log("Could not set seek time");
+            console.log(e);
+        }
+    }
+
     // Media Events
     onPlay () {
         console.log("on play");
@@ -109,8 +133,9 @@ class VideoTag {
         );
     }
 
-    onSeeking () {
+    onSeeking (e) {
         console.log("on seeking");
+        console.log(e);
         EventBus.broadcast(
             Events.PLAYBACK_SEEKING, {
                 time: this._video.currentTime
@@ -172,6 +197,12 @@ class VideoTag {
                 }
             );
         }
+    }
+
+    onRateChange (e) {
+        console.log("on ratechange");
+        console.log("\n2222222222222222222222222222222222222222222222222222222222222222222222222222222");
+        console.log(e);
     }
 
     reset () {
