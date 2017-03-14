@@ -5,9 +5,19 @@ import BufferLevel from "../objects/metrics/BufferLevel.js";
 class MetricsManager {
 
     constructor () {
+        this._latest = {};
         this._TCPList = [];
         this._HTTPList = [];
         this._BufferLevelList = [];
+    }
+
+    getLatestMetrics (mediaType) {
+        return this._latest[mediaType];
+    }
+
+    setCurrentRepresentation(mediaType, r) {
+        this._latest[mediaType] = this._latest[mediaType] || {};
+        this._latest[mediaType]["representation"] = r;
     }
 
     addHTTPRequest (http) {
@@ -18,6 +28,8 @@ class MetricsManager {
             return;
         }
 
+        this._latest[http.type] = this._latest[http.type] || {};
+        this._latest[http.type]["http"] = http;
         this._HTTPList.push(http);
     }
 
@@ -33,6 +45,8 @@ class MetricsManager {
             return;
         }
 
+        this._latest[bl.type] = this._latest[bl.type] || {};
+        this._latest[bl.type]["bufferLevel"] = bl;
         this._BufferLevelList.push(bl);
     }
 
