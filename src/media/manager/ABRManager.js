@@ -2,7 +2,8 @@ import DashDriver from "../../dash/DashDriver.js";
 import SimpleBandwidthEstimator from "../abr/SimpleBandwidthEstimator.js";
 
 class ABRManager {
-    constructor() {
+    constructor(mediaType) {
+        this.mediaType = mediaType;
         this._bandwidthEstimator = new SimpleBandwidthEstimator();
     }
 
@@ -19,7 +20,15 @@ class ABRManager {
         let representation = null;
         let bandwidth;
 
-        bandwidth = this._bandwidthEstimator.estimate();
+        /*
+         * No abr needed
+         */
+        if (bitrates.length === 1) {
+            console.log("Single representation stream: No abr needed!");
+            return DashDriver.getRepresentationForBitrate(mediaType, bitrates[0]);
+        }
+
+        bandwidth = this._bandwidthEstimator.estimate(mediaInfo);
 
         // sort in descending order
         bitrates = bitrates.sort(function (a, b) { return b - a; });
@@ -47,6 +56,7 @@ class ABRManager {
         }
 
         console.log("[ABRManager] Next representation with mimetype: " + representation.mimeType + " bandwidth: " + representation.bandwidth + " and id: " + representation.id);
+
         return representation;
     }
 
