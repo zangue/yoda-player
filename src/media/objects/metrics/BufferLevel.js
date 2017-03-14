@@ -1,5 +1,6 @@
 class BufferLevel {
     constructor() {
+        this.type = null;
         this.t = null;
         this.levelMilli = null;
     }
