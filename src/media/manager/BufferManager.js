@@ -105,6 +105,12 @@ class BufferManager {
     onSourceBufferUpdateEnd () {
         console.log("onSourceBufferUpdateEnd");
         this.AppendToSource();
+
+        EventBus.broadcast(
+            Events.SOURCE_BUFFER_UPDATED, {
+                mediaType: this.mediaType,
+            }
+        );
     }
 
     AppendToSource() {

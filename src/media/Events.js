@@ -19,6 +19,7 @@ class Events {
 
         // BufferManager
         this.INIT_REQUESTED = "initRequested";
+        this.SOURCE_BUFFER_UPDATED = "sourceBufferUpdated";
     }
 }
 

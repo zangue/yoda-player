@@ -20,6 +20,7 @@ class StreamEngine {
         this.abrManager = new ABRManager(mediaType);
         this.hasStarted = false;
         this.isIdle = false;
+        this.isSeeking = false;
         this.scheduleWhilePaused = true;
         this.lastLoadedRepresentation = null;
     }
@@ -29,6 +30,8 @@ class StreamEngine {
         console.log("Stream Engine setup for " + this.mediaType);
         this.indexHandler.setup();
         this.abrManager.setup();
+
+        MetricsManager.setCurrentRepresentation(this.mediaType, null);
 
         EventBus.subscribe(Events.FRAGMENT_LOADED, this.onFragmentLoaded, this);
         EventBus.subscribe(Events.PLAYBACK_PAUSED, this.onPlaybackPaused, this);
@@ -40,6 +43,7 @@ class StreamEngine {
         EventBus.subscribe(Events.PLAYBACK_CANPLAYTHROUGH, this.onPlaybackCanPlayThrough, this);
         EventBus.subscribe(Events.INIT_REQUESTED, this.onInitRequested, this);
         EventBus.subscribe(Events.PLAYBACK_PROGRESS, this.onPlaybackProgress, this);
+        EventBus.subscribe(Events.SOURCE_BUFFER_UPDATED, this.onSourceBufferUpdated, this);
     }
 
     start () {
@@ -69,7 +73,7 @@ class StreamEngine {
     scheduleNext () {
         let nextRep;
         let nextRequest, isInitRequired;
-        let isPaused = this.videoTag.getElement().paused;
+        let isPaused = this.videoTag.isPaused();
 
         console.dir(this.mediaInfo);
 
@@ -87,28 +91,24 @@ class StreamEngine {
             return;
 
         console.dir(nextRequest);
+        MetricsManager.setCurrentRepresentation(this.mediaType, nextRep);
         this.fragmentLoader.load(nextRequest);
 
     }
 
+    // TODO - Move this op to buffer manager
     updateBufferLevelMetrics () {
         let bl, level;
 
         bl = new BufferLevel();
         level = this.bufferManager.bufferLevel;
 
+        bl.type = this.mediaType;
         bl.t = new Date();
         bl.levelMilli = level * 1000;
 
         MetricsManager.addBufferLevel(bl);
     }
-
-    // TODO - suscribe event
-    // See if we stopped because buffer were full and
-    // schedule next segments if there some place now
-    //onFragmentAppended (data) {
-    //    this.scheduleNext();
-    //}
 
     onFragmentLoaded (data) {
         if (!data.fragment)
@@ -119,6 +119,8 @@ class StreamEngine {
 
         console.log("on Fragment Loaded! (" + this.mediaType + ")");
         //console.dir(data);
+
+        console.log(this.videoTag.isPaused());
 
         // FIXME
         if (data.fragment.isInit)
@@ -152,7 +154,9 @@ class StreamEngine {
     }
 
     onPlaybackSeeking (data) {
-        let seekTarget = this.videoTag.getElement().currentTime;
+        let seekTarget = data.time;
+
+        this.isSeeking = true;
 
         if (this.fragmentLoader.isLoading)
             this.fragmentLoader.abort();
@@ -172,6 +176,8 @@ class StreamEngine {
     }
 
     onPlaybackSeeked (data) {
+        console.log("Playback rate!!!!!!!!!!!!!!!!!");
+        console.log(this.videoTag.getElement().playbackRate);
     }
 
     onPlaybackStalled (data) {
@@ -198,6 +204,16 @@ class StreamEngine {
         }
     }
 
+    onSourceBufferUpdated (e) {
+        if (this.mediaType !== e.mediaType) return;
+
+        if (this.isSeeking) {
+            console.log("YEEEEEEEEEEEEEEEEEAAAAAAAAAAAAAAAAAAAAHHHHHHHHH");
+            this.videoTag.play();
+            this.isSeeking = false;
+        }
+    }
+
     reset () {
         EventBus.unsubscribe(Events.FRAGMENT_LOADED, this.onFragmentLoaded, this);
         EventBus.unsubscribe(Events.PLAYBACK_PAUSED, this.onPlaybackPaused, this);
@@ -209,6 +225,7 @@ class StreamEngine {
         EventBus.unsubscribe(Events.PLAYBACK_CANPLAYTHROUGH, this.onPlaybackCanPlayThrough, this);
         EventBus.unsubscribe(Events.INIT_REQUESTED, this.onInitRequested, this);
         EventBus.unsubscribe(Events.PLAYBACK_PROGRESS, this.onPlaybackProgress, this);
+        EventBus.unsubscribe(Events.SOURCE_BUFFER_UPDATED, this.onSourceBufferUpdated, this);
 
         this.playbackStarted = false;
         this.hasStarted = false;
