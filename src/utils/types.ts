@@ -22,7 +22,7 @@ export type HttpResponseType = 'arraybuffer' | 'text';
 export type HttpResponseData = ArrayBuffer | string;
 
 export interface ITimer {
-  tickAfter (seconds: number) : ITimer;
-  tickEvery (seconds: number) : ITimer;
-  clear () : void;
+  tickAfter(seconds: number): ITimer;
+  tickEvery(seconds: number): ITimer;
+  clear(): void;
 }

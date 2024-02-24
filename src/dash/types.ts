@@ -37,34 +37,36 @@ export interface IManifest {
 }
 
 export interface IManifestParser {
-  start (manifestUrl: string) : Promise<IManifest>;
-  stop () : Promise<void>;
+  start(manifestUrl: string): Promise<IManifest>;
+  stop(): Promise<void>;
 }
 
 export enum MediaType {
   VIDEO = 'video',
-  AUDIO = 'audio'
+  AUDIO = 'audio',
 }
 
-export enum StreamType { LIVE, VOD }
+export enum StreamType {
+  LIVE,
+  VOD,
+}
 
 export interface ISegmentIndex {
-  getSegments () : ISegment[];
-  merge (newSegments: ISegment[]) : void;
-  find (time: number) : ISegment | null;
-  getStartTime (unscaled?: boolean) : number;
-  getEndTime (unscaled?: boolean) : number;
-  adjustDvrWindow (dvrWindowLength: number) : void;
-  isContiguous (segments: ISegment[]) : boolean;
-  hasTime (time: number) : boolean;
+  getSegments(): ISegment[];
+  merge(newSegments: ISegment[]): void;
+  find(time: number): ISegment | null;
+  getStartTime(unscaled?: boolean): number;
+  getEndTime(unscaled?: boolean): number;
+  adjustDvrWindow(dvrWindowLength: number): void;
+  isContiguous(segments: ISegment[]): boolean;
+  hasTime(time: number): boolean;
 }
 
-
 export interface IPresentation {
-  isLive () : boolean;
-  getStartTime () : number;
-  getMaxSegmentDuration (): number;
-  getDelay () : number;
-  getPosition () : number;
-  getDuration () : number;
+  isLive(): boolean;
+  getStartTime(): number;
+  getMaxSegmentDuration(): number;
+  getDelay(): number;
+  getPosition(): number;
+  getDuration(): number;
 }

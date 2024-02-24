@@ -4,7 +4,7 @@ import {
   HttpResponseType,
   HttpResponseData,
   HttpRequestBody,
-  HttpRequestMethod
+  HttpRequestMethod,
 } from './types';
 
 export class HttpRequest implements IHttpRequest {
@@ -14,51 +14,50 @@ export class HttpRequest implements IHttpRequest {
   private body_: HttpRequestBody = null;
   private responseType_: HttpResponseType = 'arraybuffer';
 
-  constructor (url: string) {
+  constructor(url: string) {
     this.url_ = url;
   }
 
-  get url () : string {
+  get url(): string {
     return this.url_;
   }
 
-  set url (newUrl: string) {
+  set url(newUrl: string) {
     this.url_ = newUrl;
   }
 
-  get method () : HttpRequestMethod {
+  get method(): HttpRequestMethod {
     return this.method_;
   }
 
-  set method (newMethod: HttpRequestMethod) {
+  set method(newMethod: HttpRequestMethod) {
     this.method_ = newMethod;
   }
 
-  get responseType () : HttpResponseType {
+  get responseType(): HttpResponseType {
     return this.responseType_;
   }
 
-  set responseType (newResponseType: HttpResponseType) {
+  set responseType(newResponseType: HttpResponseType) {
     this.responseType_ = newResponseType;
   }
 
-  get body () : HttpRequestBody {
-    return this.body_
+  get body(): HttpRequestBody {
+    return this.body_;
   }
 
-  set body (body: HttpRequestBody) {
+  set body(body: HttpRequestBody) {
     this.body_ = body;
   }
 
-  get headers () : Map<string, string> {
+  get headers(): Map<string, string> {
     return this.headers_;
   }
 
-  setHeader (key: string, value: string) {
-    this.headers_.set(key, value)
+  setHeader(key: string, value: string) {
+    this.headers_.set(key, value);
   }
 }
-
 
 export class HttpResponse implements IHttpResponse {
   private request_: IHttpRequest;
@@ -66,11 +65,16 @@ export class HttpResponse implements IHttpResponse {
   private headers_: string;
   private data_: HttpResponseData;
   private ok_: boolean;
-  private message_: string = '';
+  private message_ = '';
 
-  constructor (
-      request: IHttpRequest, status: number, headers: string,
-      data: HttpResponseData, ok: boolean, message: string) {
+  constructor(
+    request: IHttpRequest,
+    status: number,
+    headers: string,
+    data: HttpResponseData,
+    ok: boolean,
+    message: string
+  ) {
     this.request_ = request;
     this.status_ = status;
     this.headers_ = headers;
@@ -79,35 +83,33 @@ export class HttpResponse implements IHttpResponse {
     this.message_ = message;
   }
 
-  get request () : IHttpRequest {
+  get request(): IHttpRequest {
     return this.request_;
   }
 
-  get status () : number {
+  get status(): number {
     return this.status_;
   }
 
-  get headers () : string {
+  get headers(): string {
     return this.headers_;
   }
 
-  get data () : HttpResponseData {
+  get data(): HttpResponseData {
     return this.data_;
   }
 
-  get ok () : boolean {
+  get ok(): boolean {
     return this.ok_;
   }
 
-  get message () : string {
+  get message(): string {
     return this.message_;
   }
-
 }
 
-
 export class NetworkHandle {
-  static fetch (request: IHttpRequest) : Promise<IHttpResponse> {
+  static fetch(request: IHttpRequest): Promise<IHttpResponse> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
 
@@ -117,7 +119,7 @@ export class NetworkHandle {
         xhr.setRequestHeader(name, value);
       });
 
-      const makeResponse = (isOk: boolean) : IHttpResponse => {
+      const makeResponse = (isOk: boolean): IHttpResponse => {
         return new HttpResponse(
           request,
           xhr.status,
@@ -128,8 +130,8 @@ export class NetworkHandle {
         );
       };
 
-      xhr.onload = (ev) => {
-        const response = makeResponse((xhr.status >= 200 && xhr.status < 300));
+      xhr.onload = ev => {
+        const response = makeResponse(xhr.status >= 200 && xhr.status < 300);
 
         if (response.ok) {
           resolve(response);
@@ -138,9 +140,12 @@ export class NetworkHandle {
         }
       };
 
-      xhr.onerror = xhr.ontimeout = xhr.onabort = (ev) => {
-        reject(makeResponse(false));
-      };
+      xhr.onerror =
+        xhr.ontimeout =
+        xhr.onabort =
+          ev => {
+            reject(makeResponse(false));
+          };
 
       xhr.send(request.body);
     });

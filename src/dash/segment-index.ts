@@ -1,4 +1,4 @@
-import { ISegment, ISegmentIndex } from './types';
+import {ISegment, ISegmentIndex} from './types';
 
 /**
  * Creates a segment index.
@@ -6,25 +6,23 @@ import { ISegment, ISegmentIndex } from './types';
 export class SegmentIndex implements ISegmentIndex {
   private segments_: ISegment[];
 
-  constructor (segments: ISegment[]) {
+  constructor(segments: ISegment[]) {
     this.segments_ = segments;
   }
-
 
   /**
    * Get All segments in this index.
    * @returns All segments in the index.
    */
-  getSegments () : ISegment[] {
+  getSegments(): ISegment[] {
     return this.segments_;
   }
-
 
   /**
    * Add new segment to the index.
    * @param newSegments
    */
-  merge (newSegments: ISegment[]) : void {
+  merge(newSegments: ISegment[]): void {
     if (newSegments.length < 1) {
       return;
     }
@@ -45,11 +43,12 @@ export class SegmentIndex implements ISegmentIndex {
     }
 
     if (!this.isContiguous(this.segments_)) {
-      console.warn('The segment timeline is not contiguous. ' +
-        'This might lead to playback issues')
+      console.warn(
+        'The segment timeline is not contiguous. ' +
+          'This might lead to playback issues'
+      );
     }
   }
-
 
   /**
    * Search the index for a segment that contains the providedn |time|.
@@ -57,21 +56,21 @@ export class SegmentIndex implements ISegmentIndex {
    * @param time
    * @returns The segment that contains |time| or null.
    */
-  find (time: number) : ISegment | null {
+  find(time: number): ISegment | null {
     for (const segment of this.segments_) {
-      if ((segment.start <= time) && (time < segment.end)) {
+      if (segment.start <= time && time < segment.end) {
         return segment;
       }
     }
 
     console.warn(
-        'Could not find segment for time:' + time + '.',
-        'Segment count: ' + (this.segments_.length - 1),
-        'Last end: ' + this.getEndTime());
+      'Could not find segment for time:' + time + '.',
+      'Segment count: ' + (this.segments_.length - 1),
+      'Last end: ' + this.getEndTime()
+    );
 
     return null;
   }
-
 
   /**
    * Get the index start time.
@@ -79,14 +78,13 @@ export class SegmentIndex implements ISegmentIndex {
    * @param unscaled Whether or not the return the unscaled time
    * @returns Start time.
    */
-  getStartTime (unscaled?: boolean) : number {
+  getStartTime(unscaled?: boolean): number {
     if (this.segments_.length > 0) {
       const first = this.segments_[this.segments_.length - 1];
-      return (unscaled ? first.start : first.unscaledStart);
+      return unscaled ? first.start : first.unscaledStart;
     }
     return 0;
   }
-
 
   /**
    * Get the index end time.
@@ -94,7 +92,7 @@ export class SegmentIndex implements ISegmentIndex {
    * @param unscaled Whether or not the return the unscaled time
    * @returns End time.
    */
-  getEndTime (unscaled?: boolean) : number {
+  getEndTime(unscaled?: boolean): number {
     if (this.segments_.length > 0) {
       const last = this.segments_[this.segments_.length - 1];
       return unscaled ? last.unscaledEnd : last.end;
@@ -102,26 +100,25 @@ export class SegmentIndex implements ISegmentIndex {
     return 0;
   }
 
-
   /**
    * Evicts segment from the index, that have fallen out of the provided
    * window length.
    *
    * @param dvrWindowLength DVR window length
    */
-  adjustDvrWindow (dvrWindowLength: number) : void {
+  adjustDvrWindow(dvrWindowLength: number): void {
     const windowStart = this.getEndTime() - dvrWindowLength;
 
     const oldSize = this.segments_.length;
 
-    this.segments_ =
-        this.segments_.filter(segment => segment.end > windowStart);
+    this.segments_ = this.segments_.filter(
+      segment => segment.end > windowStart
+    );
 
     const newSize = this.segments_.length;
 
     console.log('Evicted ' + (oldSize - newSize) + ' segments.');
   }
-
 
   /**
    * Checks if the provided media segments constitute a contiguous timeline.
@@ -129,7 +126,7 @@ export class SegmentIndex implements ISegmentIndex {
    * @param segments Array of media segments
    * @returns True if timeline is contiguous, false otherwise.
    */
-  isContiguous (segments: ISegment[]) : boolean {
+  isContiguous(segments: ISegment[]): boolean {
     if (segments.length < 2) {
       return true;
     }
@@ -143,9 +140,8 @@ export class SegmentIndex implements ISegmentIndex {
         return false;
       }
     }
-    return true
+    return true;
   }
-
 
   /**
    * Check if the timeline formed by the segments currently in the index
@@ -153,12 +149,12 @@ export class SegmentIndex implements ISegmentIndex {
    * @param time Time to check
    * @returns True if |time| in segment timeline.
    */
-  hasTime (time: number) : boolean {
+  hasTime(time: number): boolean {
     const firstSegment = this.segments_[0];
     const lastSegment = this.segments_[this.segments_.length - 1];
     const firstSegmentStart = firstSegment.start;
     const lastSegmentEnd = lastSegment.end;
 
-    return (firstSegmentStart <= time) && (time <= lastSegmentEnd);
+    return firstSegmentStart <= time && time <= lastSegmentEnd;
   }
 }

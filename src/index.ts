@@ -1,7 +1,7 @@
-import { Player } from './player';
+import {Player} from './player';
 
 const lib = {
-  Player
+  Player,
 };
 
 export default lib;

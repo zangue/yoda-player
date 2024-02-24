@@ -1,8 +1,14 @@
-import { IManifest, IManifestParser, IPresentation, IRepresentation, MediaType, StreamType } from './dash/types';
-import { IMseAdapter, MseAdapter } from './mse-adapter';
-import { Streamer } from './streamer';
-import { ManifestParser as DashParser } from './dash/manifest-parser';
-
+import {
+  IManifest,
+  IManifestParser,
+  IPresentation,
+  IRepresentation,
+  MediaType,
+  StreamType,
+} from './dash/types';
+import {IMseAdapter, MseAdapter} from './mse-adapter';
+import {Streamer} from './streamer';
+import {ManifestParser as DashParser} from './dash/manifest-parser';
 
 interface ITrack {
   id: string;
@@ -18,23 +24,22 @@ interface IVideoTrack extends ITrack {
   frameRate: number;
 }
 
-interface IAudioTrack extends ITrack {}
+type IAudioTrack = ITrack;
 
 /**
  * A minimal MPEG-DASH player.
  */
 export class Player {
   private video_: HTMLMediaElement;
-  private manifestUrl_: string = '';
+  private manifestUrl_ = '';
   private manifest_: IManifest | null = null;
   private parser_: IManifestParser | null = null;
   private mse_: IMseAdapter | null = null;
   private streamer_: Streamer | null = null;
 
-  constructor (video: HTMLMediaElement) {
+  constructor(video: HTMLMediaElement) {
     this.video_ = video;
   }
-
 
   /**
    * Loads and play the provided content.
@@ -42,7 +47,7 @@ export class Player {
    * @param streamUrl The content URL.
    * @return Promise.
    */
-  async load (streamUrl: string) : Promise<void> {
+  async load(streamUrl: string): Promise<void> {
     this.manifestUrl_ = streamUrl;
     this.parser_ = new DashParser();
     this.mse_ = new MseAdapter(this.video_);
@@ -53,9 +58,13 @@ export class Player {
     const initStreams: Map<MediaType, IRepresentation> = new Map();
 
     initStreams.set(
-        MediaType.VIDEO, this.pickHighestKbps_(this.manifest_.video));
+      MediaType.VIDEO,
+      this.pickHighestKbps_(this.manifest_.video)
+    );
     initStreams.set(
-        MediaType.AUDIO, this.pickHighestKbps_(this.manifest_.audio));
+      MediaType.AUDIO,
+      this.pickHighestKbps_(this.manifest_.audio)
+    );
 
     await this.streamer_.setup(initStreams);
     const streamingStarted = await this.streamer_.start();
@@ -67,11 +76,10 @@ export class Player {
     }
   }
 
-
   /**
    * Stops the player.
    */
-  async stop () : Promise<void> {
+  async stop(): Promise<void> {
     if (this.parser_) {
       this.parser_.stop();
       this.parser_ = null;
@@ -86,24 +94,22 @@ export class Player {
     }
   }
 
-
   /**
    * Get all video tracks.
    * @returns All available video tracks
    */
-  getAllVideo () : IVideoTrack[] {
+  getAllVideo(): IVideoTrack[] {
     if (this.manifest_ && this.manifest_.video.length > 0) {
       return this.manifest_.video.map(video => this.getPublicVideo_(video));
     }
     return [];
   }
 
-
   /**
    * Get all audio tracks.
    * @returns All available audio tracks.
    */
-  getAllAudio () : IAudioTrack[] {
+  getAllAudio(): IAudioTrack[] {
     if (this.manifest_ && this.manifest_.audio.length > 0) {
       return this.manifest_.audio.map(audio => this.getPublicAudio_(audio));
     }
@@ -114,7 +120,7 @@ export class Player {
    * Get the active (currently buffering) video stream.
    * @returns The currently active video stream or null.
    */
-  getActiveVideo () : IVideoTrack | null {
+  getActiveVideo(): IVideoTrack | null {
     const active = this.streamer_?.getActiveStream(MediaType.VIDEO) || null;
     if (active) {
       return this.getPublicVideo_(active);
@@ -122,12 +128,11 @@ export class Player {
     return active;
   }
 
-
   /**
    * Get the active (currently buffering) audio stream.
    * @returns The currently active audio stream or null.
    */
-  getActiveAudio () : IAudioTrack | null {
+  getActiveAudio(): IAudioTrack | null {
     const active = this.streamer_?.getActiveStream(MediaType.AUDIO) || null;
     if (active) {
       return this.getPublicAudio_(active);
@@ -135,18 +140,17 @@ export class Player {
     return null;
   }
 
-  isLive () : boolean {
+  isLive(): boolean {
     if (this.manifest_ && this.manifest_.type === StreamType.LIVE) {
       return true;
     }
     return false;
   }
 
-
   /**
    * @returns An implementation of IPresentation.
    */
-  private getPresentationImpl_ () : IPresentation {
+  private getPresentationImpl_(): IPresentation {
     return {
       isLive: () => this.isLive(),
       getStartTime: () => (this.manifest_ && this.manifest_.startTime) || 0,
@@ -168,17 +172,15 @@ export class Player {
           return this.manifest_.duration;
         }
         return 0;
-      }
+      },
     };
   }
 
-
-  private pickHighestKbps_ (streams: IRepresentation[]) : IRepresentation {
-    return streams.reduce((s1, s2) => (s1.kbps > s2.kbps) ? s1 : s2);
+  private pickHighestKbps_(streams: IRepresentation[]): IRepresentation {
+    return streams.reduce((s1, s2) => (s1.kbps > s2.kbps ? s1 : s2));
   }
 
-
-  private getPublicVideo_ (video: IRepresentation) : IVideoTrack {
+  private getPublicVideo_(video: IRepresentation): IVideoTrack {
     return {
       id: video.id,
       originalId: video.originalId,
@@ -188,19 +190,18 @@ export class Player {
       mimeType: video.mimeType,
       width: video.width as number,
       height: video.height as number,
-      frameRate: video.frameRate as number
+      frameRate: video.frameRate as number,
     };
   }
 
-
-  private getPublicAudio_ (audio: IRepresentation) : IAudioTrack {
+  private getPublicAudio_(audio: IRepresentation): IAudioTrack {
     return {
       id: audio.id,
       originalId: audio.originalId,
       type: audio.type,
       kbps: audio.kbps,
       codecs: audio.codecs,
-      mimeType: audio.mimeType
+      mimeType: audio.mimeType,
     };
   }
 }

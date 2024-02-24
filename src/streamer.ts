@@ -1,14 +1,13 @@
-import { IHttpResponse, ITimer } from "./utils/types";
-import { IMseAdapter } from "./mse-adapter";
+import {IHttpResponse, ITimer} from './utils/types';
+import {IMseAdapter} from './mse-adapter';
 import {
   IRepresentation,
   ISegment,
   MediaType,
-  IPresentation
-} from "./dash/types";
-import { Timer } from "./utils/timer";
-import { HttpRequest, NetworkHandle } from "./utils/network";
-
+  IPresentation,
+} from './dash/types';
+import {Timer} from './utils/timer';
+import {HttpRequest, NetworkHandle} from './utils/network';
 
 interface MediaState {
   type: MediaType;
@@ -30,15 +29,13 @@ export class Streamer {
   private presentation_: IPresentation;
   private mediaStates_: Map<MediaType, MediaState> = new Map();
   private startTime_: number | null = null;
-  private stopped_: boolean = false;
+  private stopped_ = false;
   private readonly scheduleInterval: number = 0.25;
 
-
-  constructor (mseAdapter: IMseAdapter, presentation: IPresentation) {
+  constructor(mseAdapter: IMseAdapter, presentation: IPresentation) {
     this.mse_ = mseAdapter;
     this.presentation_ = presentation;
   }
-
 
   /**
    * This method sets up the streamer. It needs to be called first!
@@ -50,7 +47,7 @@ export class Streamer {
    * @param streamMap A map containing initial streams
    * @returns Promise
    */
-  async setup (streamMap: Map<MediaType, IRepresentation>) : Promise<void> {
+  async setup(streamMap: Map<MediaType, IRepresentation>): Promise<void> {
     await this.mse_.openMediaSource();
     await this.mse_.setupSourceBuffers(streamMap);
 
@@ -59,26 +56,31 @@ export class Streamer {
       if (mediatType === MediaType.VIDEO) {
         if (!this.mediaStates_.has(mediatType)) {
           this.mediaStates_.set(
-              mediatType, this.createMediaState_(mediatType, stream));
+            mediatType,
+            this.createMediaState_(mediatType, stream)
+          );
         }
       }
 
       if (mediatType === MediaType.AUDIO) {
         if (!this.mediaStates_.has(mediatType)) {
           this.mediaStates_.set(
-              mediatType, this.createMediaState_(mediatType, stream));
+            mediatType,
+            this.createMediaState_(mediatType, stream)
+          );
         }
       }
     });
 
     // This operation is successful is we could setup all streams.
     console.assert(
-        streamMap.size === this.mediaStates_.size,
-        'Should have media states for all types');
+      streamMap.size === this.mediaStates_.size,
+      'Should have media states for all types'
+    );
 
     // Set duration
     const stream =
-        streamMap.get(MediaType.VIDEO) || streamMap.get(MediaType.AUDIO);
+      streamMap.get(MediaType.VIDEO) || streamMap.get(MediaType.AUDIO);
 
     // TODO - Add getDuration() to IPresentation
     let duration = stream?.segmentIndex.getEndTime();
@@ -94,7 +96,6 @@ export class Streamer {
     this.mse_.setDuration(duration);
   }
 
-
   /**
    * Start the streaming. At this point the media source and source buffers
    * are set. This method will set the stream start time and active
@@ -102,7 +103,7 @@ export class Streamer {
    *
    * @returns True if successful, false otherwise.
    */
-  start () : boolean {
+  start(): boolean {
     if (this.mediaStates_.size === 0) {
       console.warn('Streams needs to be setup before start. No-op...');
       return false;
@@ -123,12 +124,13 @@ export class Streamer {
     }
 
     const mediaState =
-        this.mediaStates_.get(MediaType.VIDEO) ||
-        this.mediaStates_.get(MediaType.AUDIO);
+      this.mediaStates_.get(MediaType.VIDEO) ||
+      this.mediaStates_.get(MediaType.AUDIO);
 
     console.assert(
-        mediaState?.stream.segmentIndex.hasTime(this.startTime_),
-        'Bug: Start time is not within the presentation timeline');
+      mediaState?.stream.segmentIndex.hasTime(this.startTime_),
+      'Bug: Start time is not within the presentation timeline'
+    );
 
     console.log('Start time:', this.startTime_);
 
@@ -149,7 +151,7 @@ export class Streamer {
   /**
    * Stop streaming.
    */
-  stop () : void {
+  stop(): void {
     this.stopped_ = true;
     this.mse_.closeMediaSource();
     for (const mediaState of this.mediaStates_.values()) {
@@ -161,10 +163,9 @@ export class Streamer {
   /**
    * @returns The presentation time we started streaming at
    */
-  getStartTime () : number | null {
+  getStartTime(): number | null {
     return this.startTime_;
   }
-
 
   /**
    * Get the stream of type |mediaType| being currently buffered
@@ -172,14 +173,13 @@ export class Streamer {
    * @param mediaType The media type
    * @returns The active |mediaType| stream or null
    */
-  getActiveStream (mediaType: MediaType) : IRepresentation | null {
+  getActiveStream(mediaType: MediaType): IRepresentation | null {
     const mediaState = this.mediaStates_.get(mediaType);
     if (mediaState) {
       return mediaState.stream;
     }
     return null;
   }
-
 
   /**
    * Called when a stream's scheduler timer ticked. This will check, for an
@@ -190,7 +190,7 @@ export class Streamer {
    * @param mediaState The media state of the currently scheduled stream.
    * @returns Promise.
    */
-  private async onTick_ (mediaState: MediaState) : Promise<void> {
+  private async onTick_(mediaState: MediaState): Promise<void> {
     if (this.stopped_) {
       // Streaming has been stopped
       return;
@@ -204,8 +204,10 @@ export class Streamer {
     // Check if we should buffer more
     const bufferingGoal = 30;
     const playheadPosition = this.presentation_.getPosition();
-    const bufferedAhead =
-        this.mse_.getBufferedAheadOf(mediaState.type, playheadPosition);
+    const bufferedAhead = this.mse_.getBufferedAheadOf(
+      mediaState.type,
+      playheadPosition
+    );
     if (bufferedAhead > bufferingGoal) {
       return;
     }
@@ -213,7 +215,7 @@ export class Streamer {
     mediaState.updating = true;
 
     try {
-      let timeNeeded = this.getTimeNeeded_(mediaState);
+      const timeNeeded = this.getTimeNeeded_(mediaState);
       const nextSegment = mediaState.stream.segmentIndex.find(timeNeeded);
 
       if (nextSegment) {
@@ -230,7 +232,8 @@ export class Streamer {
       if (netRespone.status && netRespone.status === 404) {
         console.info(
           'Segment present in manifest but server returned HTTP 404.',
-          'Will rety...');
+          'Will rety...'
+        );
       } else {
         console.error('(streaming) Fetch and append failed...', e);
         // throw e;
@@ -240,16 +243,16 @@ export class Streamer {
     }
   }
 
-
   /**
    * Fetch segment and push data to buffer.
    *
    * @param mediaState The stream's state/context.
    * @param segment The segment to download.
    */
-  private async fetchAndAppend_ (
-      mediaState: MediaState, segment: ISegment) : Promise<void> {
-
+  private async fetchAndAppend_(
+    mediaState: MediaState,
+    segment: ISegment
+  ): Promise<void> {
     const request = new HttpRequest(segment.url);
     request.responseType = 'arraybuffer';
 
@@ -261,28 +264,28 @@ export class Streamer {
     }
   }
 
-
   /**
    * Get next timestamp we need to buffer.
    *
    * @param mediaState The stream state/context.
    * @returns The time needed.
    */
-  private getTimeNeeded_ (mediaState: MediaState) : number {
+  private getTimeNeeded_(mediaState: MediaState): number {
     if (mediaState.lastSegment) {
       return mediaState.lastSegment.end;
     }
     return this.presentation_.getPosition();
   }
 
-
   /**
    * Computes the live edge.
    * @returns The live edge
    */
-  private getLiveEdge_ () : number {
+  private getLiveEdge_(): number {
     console.assert(
-        this.presentation_.isLive(), 'Invalid call to getLiveEdge_()');
+      this.presentation_.isLive(),
+      'Invalid call to getLiveEdge_()'
+    );
     const maxSegmentDuration = this.presentation_.getMaxSegmentDuration();
     const presentationStartTime = this.presentation_.getStartTime();
     const now = Date.now() / 1000;
@@ -290,16 +293,17 @@ export class Streamer {
     return Math.max(0, now - maxSegmentDuration - presentationStartTime);
   }
 
-
-  private createMediaState_ (
-      type: MediaType, stream: IRepresentation) : MediaState {
+  private createMediaState_(
+    type: MediaType,
+    stream: IRepresentation
+  ): MediaState {
     return {
       type,
       stream,
       needInit: true,
       lastSegment: null,
       updating: false,
-      scheduleTimer: null
+      scheduleTimer: null,
     };
   }
 }

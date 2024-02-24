@@ -1,12 +1,10 @@
-
 export type BufferedRange = {
   start: number;
   end: number;
 };
 
 export class TimeRangesUtils {
-
-  static getBufferedInfo (b: TimeRanges) : BufferedRange[] {
+  static getBufferedInfo(b: TimeRanges): BufferedRange[] {
     if (!b) {
       return [];
     }
@@ -17,13 +15,12 @@ export class TimeRangesUtils {
     return ret;
   }
 
-
-  static bufferedAheadOf (b: TimeRanges, time: number) : number {
+  static bufferedAheadOf(b: TimeRanges, time: number): number {
     if (!b || !b.length) {
       return 0;
     }
     // Workaround Safari bug: https://bit.ly/2trx6O8
-    if (b.length == 1 && b.end(0) - b.start(0) < 1e-6) {
+    if (b.length === 1 && b.end(0) - b.start(0) < 1e-6) {
       return 0;
     }
 
