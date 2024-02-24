@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Armand Zangue">
+    <title>Yoda Player Demo</title>
+
+    <!-- Pico.css -->
+    <link rel="stylesheet" href="./css/pico.min.css">
+    <link rel="stylesheet" href="./css/custom.css">
+
+  </head>
+
+  <body>
+    <!-- Main -->
+    <main class="container">
+
+      <!-- Preview -->
+      <section id="preview">
+        <form>
+          <div>
+            <input id="streamInput" type="url" name="streamUrl" placeholder="MPEG-DASH Stream URL" aria-label="MPEG-DASH Stream URL" required>
+            <button id="loadButton" type="submit">Load</button>
+          </div>
+        </form>
+      </section><!-- ./ Preview -->
+
+      <section id="player" class="container">
+        <video id="video" controls crossorigin="anonymous"></video>
+      </section>
+
+    <!-- Footer -->
+    <footer class="container">
+      <small>Built by <a target="_blank" href="https://linkedin.com/in/zangue">Armand Zangue</a> • <a target="_blank" href="https://github.com/zangue/yoda-player">Source code</a></small>
+    </footer><!-- ./ Footer -->
+
+    <script src="./js/yoda-player.js"></script>
+    <script>
+      let player;
+      var mediaElement = document.getElementById('video');
+      var streamUrlInput = document.getElementById('streamInput');
+      var loadButton = document.getElementById('loadButton');
+
+      function loadPlayer(streamUrl) {
+        var stopPromise = Promise.resolve();
+        if (player) {
+          stopPromise = player.stop()
+        }
+
+        stopPromise.then(function () {
+          player = window.player = new yoda.Player(mediaElement);
+          return player.load(streamUrl);
+        }).then(function () {
+          console.log('Player loaded!');
+        }).catch(function (e) {
+          console.error('Player could not load', e);
+        })
+      }
+
+      loadButton.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const streamUrl = streamUrlInput.value;
+
+        loadPlayer(streamUrl);
+      });
+    </script>
+
+  </body>
+
+</html>
