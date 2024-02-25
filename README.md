@@ -1,52 +1,59 @@
-YODA PLAYER
+Yoda Player
 ===========
 
-YODA player (**Y**et an**O**ther **DA**SH player) is a client implementation for
-playback of MPEG-DASH in compliant browser environments.
+Yoda player (**Y**et an**O**ther **DA**SH player) is a TypeScript library that implements an [MPEG-DASH](https://www.mpeg.org/standards/MPEG-DASH/) client. It can
+be used for playback in web based environments that provide [HTML5 <video>](https://html.spec.whatwg.org/multipage/media.html#the-video-element) and [MediaSource Extensions](https://www.w3.org/TR/media-source/) APIs.
 
-Build
+Furthermore, the library currently relies on [DOMParser](https://html.spec.whatwg.org/multipage/dynamic-markup-insertion.html#dom-parsing-and-serialization) and [Document](https://developer.mozilla.org/en-US/docs/Web/API/Document#specifications) to parse XML.
+
+Disclaimer
+----
+This is an experimental project. Please, **DO NOT** use in any production environment! If you're looking for an open-source, production ready media player I recommend you consider following projects instead:
+- [Shaka Player](https://github.com/shaka-project/shaka-player)
+- [dash.js](https://github.com/Dash-Industry-Forum/dash.js)
+- [hls.js](https://github.com/video-dev/hls.js)
+- [RxPlayer](https://github.com/canalplus/rx-player)
+
+Getting started
 -----
+Make sure you have [git](https://git-scm.com/downloads) and [nodejs/npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) installed on your machine.
 
-Note: You will need to have nodejs / npm and gulp installed on your machine
-
-1. Download source
+1. Checkout repository
 2. Install the dependencies
-3. Trigger build
+3. build
 
 ```
 git clone git@github.com:zangue/yoda-player.git
 cd yoda-player
 npm install
-gulp make
+npm run build
 ```
 
 Basic Usage
 -----------
-
-You will need to create a video element within your HTML and assign it an id. Then add
-the player and initialize it
+This is an example of how you can embed Yoda Player into your HTML page.
 
 ```html
 <!doctype html>
 
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-</head>
+  <head>
+    <meta charset="utf-8">
+  </head>
 
-<body>
-  <script src="path/to/yoda-player.js"></script>
-  <video id="video" controls="true" autoplay="true"></video>
-  <script>
-    var config = {
-        mpd: "http://www.bok.net/dash/tears_of_steel/cleartext/stream.mpd",
-        id: "video"
-    };
-    var player = new yoda.Player(config);
+  <body>
+    <video id="video" controls="true" autoplay="true"></video>
 
-    player.setup();
-  </script>
-</body>
+    <script src="path/to/yoda-player.js"></script>
+    <script>
+      var mediaElement = document.getElementById('video');
+      var streamUrl = 'https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd';
+
+      var player = new yoda.Player(mediaElement);
+
+      player.load(streamUrl);
+    </script>
+  </body>
 </html>
 ```
 
