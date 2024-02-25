@@ -109,16 +109,19 @@ export class MseAdapter implements IMseAdapter {
     const videoStream = streamMap.get(MediaType.VIDEO);
     const audioStream = streamMap.get(MediaType.AUDIO);
 
+    let setupSuccess = true;
+
     if (videoStream) {
-      this.addSourceBuffer_(MediaType.VIDEO, videoStream);
+      setupSuccess = this.addSourceBuffer_(MediaType.VIDEO, videoStream);
     }
 
     if (audioStream) {
-      this.addSourceBuffer_(MediaType.AUDIO, audioStream);
+      setupSuccess = this.addSourceBuffer_(MediaType.AUDIO, audioStream);
     }
 
-    if (this.sourceBuffers_.size < 1) {
-      console.warn('Could not setup source buffers...');
+    if (this.sourceBuffers_.size < 1 || !setupSuccess) {
+      console.warn('Could not setup (all) source buffers...');
+      throw new Error('Could not setup (all) source buffers...');
     }
   }
 
@@ -142,7 +145,9 @@ export class MseAdapter implements IMseAdapter {
       return appendContext.operation.promise;
     }
 
-    return Promise.reject();
+    return Promise.reject(
+      new Error(`Not source buffer found for type ${mediaType}`)
+    );
   }
 
   setCurrentTime(time: number): void {
@@ -248,7 +253,7 @@ export class MseAdapter implements IMseAdapter {
   private addSourceBuffer_(
     mediaType: MediaType,
     stream: IRepresentation
-  ): void {
+  ): boolean {
     if (this.mediaSource_) {
       const fullMimeType = ParserUtils.getFullMimeType(stream);
       const supportedByPlatform = MediaSource.isTypeSupported(fullMimeType);
@@ -268,7 +273,7 @@ export class MseAdapter implements IMseAdapter {
         console.warn(
           `Skipping ${mediaType} stream because not supported by platform.`
         );
-        return;
+        return false;
       }
 
       const sourceBuffer = this.mediaSource_.addSourceBuffer(fullMimeType);
@@ -284,6 +289,8 @@ export class MseAdapter implements IMseAdapter {
         sourceBuffer.addEventListener('error', this.onErrorAudio_);
         this.sourceBuffers_.set(MediaType.AUDIO, sourceBuffer);
       }
+      return true;
     }
+    return false;
   }
 }

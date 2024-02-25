@@ -87,7 +87,6 @@ export class ParserUtils {
     identifiers: Partial<UrlTemplateIdentifier>,
     baseUrl?: string
   ): string {
-    // debugger;
     let resolvedTemplate = url;
 
     if (identifiers.representationId) {
@@ -97,28 +96,28 @@ export class ParserUtils {
       );
     }
 
-    if (identifiers.number) {
+    if (ParserUtils.isNumber(identifiers.number)) {
       resolvedTemplate = resolvedTemplate.replace(
         /\$Number\$/g,
         String(identifiers.number)
       );
     }
 
-    if (identifiers.subNumber) {
+    if (ParserUtils.isNumber(identifiers.subNumber)) {
       resolvedTemplate = resolvedTemplate.replace(
         /\$SubNumber\$/g,
         String(identifiers.number)
       );
     }
 
-    if (identifiers.bandwidth) {
+    if (ParserUtils.isNumber(identifiers.bandwidth)) {
       resolvedTemplate = resolvedTemplate.replace(
         /\$Bandwidth\$/,
         String(identifiers.bandwidth)
       );
     }
 
-    if (identifiers.time) {
+    if (ParserUtils.isNumber(identifiers.time)) {
       resolvedTemplate = resolvedTemplate.replace(
         /\$Time\$/g,
         String(identifiers.time)
@@ -146,5 +145,9 @@ export class ParserUtils {
       fullMimeType += '; codecs="' + stream.codecs + '"';
     }
     return fullMimeType;
+  }
+
+  static isNumber(value: unknown): boolean {
+    return typeof value === 'number';
   }
 }

@@ -12,12 +12,39 @@ import {
   StreamType,
 } from './types';
 
+// type PeriodContext = {
+//   id: string;
+//   duration: number;
+// }
+
+enum SegmentIndexType {
+  Base,
+  Template,
+  Timeline,
+}
+
+type CommonAttributesAndElements = {
+  width: number | null;
+  height: number | null;
+  frameRate: number | null;
+  mimeType: string;
+  codecs: string;
+  samplingRate: number | null;
+};
+
 type AdaptationSetContext = {
   id: string;
-  mimeType: string;
   contentType: string;
   codecs: string;
-  segmentTemplate: Element;
+  maxHeight: number;
+  maxWidth: number;
+  maxFrameRate: number;
+  maxBandwidth: number;
+  mimeType: string;
+  segmentNode: {
+    node: Element;
+    indexType: SegmentIndexType;
+  } | null;
 };
 
 type RepresentationContext = {
@@ -41,6 +68,10 @@ type AllSegments = {
   mediaSegments: ISegment[];
 };
 
+// TODO
+// Introduce |parseMandatoryAttr| utilities that will abort the parsing
+// operation in case a mandatory attribute is not provided.
+
 /**
  * A MPEG-DASH Manifest parser.
  *
@@ -52,6 +83,8 @@ export class ManifestParser implements IManifestParser {
   private manifestUrl_: string;
   private manifest_: IManifest | null;
   private maxSegmentDuration_: number;
+  private minimumUpdatePeriod_: number;
+  private presentationType_: StreamType;
   private presentationDuration_: number | null;
   private streamMap_: Map<MediaType, IRepresentation[]>;
   private globalId_: 0;
@@ -61,7 +94,9 @@ export class ManifestParser implements IManifestParser {
     this.manifestUrl_ = '';
     this.manifest_ = null;
     this.maxSegmentDuration_ = -1;
+    this.presentationType_ = StreamType.VOD;
     this.presentationDuration_ = null;
+    this.minimumUpdatePeriod_ = -1;
     this.streamMap_ = new Map();
     this.globalId_ = 0;
     this.refreshTimer_ = new Timer(() => this.refreshManifest_());
@@ -113,7 +148,8 @@ export class ManifestParser implements IManifestParser {
       Utils.parseIsoDuration(
         mpd.getAttribute('mediaPresentationDuration') || ''
       ) || null;
-    const presentationType = mpd.getAttribute('type');
+    this.presentationType_ =
+      mpd.getAttribute('type') === 'dynamic' ? StreamType.LIVE : StreamType.VOD;
     const minBufferTime =
       Utils.parseIsoDuration(mpd.getAttribute('minBufferTime') || '') || -1;
     const presentationStartTime =
@@ -121,7 +157,7 @@ export class ManifestParser implements IManifestParser {
     const suggestedPresentationDelay = Utils.parseIsoDuration(
       mpd.getAttribute('suggestedPresentationDelay') || ''
     );
-    const minimumUpdatePeriod =
+    this.minimumUpdatePeriod_ =
       Utils.parseIsoDuration(mpd.getAttribute('minimumUpdatePeriod') || '') ||
       -1;
     const dvrWindowLength =
@@ -151,13 +187,11 @@ export class ManifestParser implements IManifestParser {
     if (!this.presentationDuration_) {
       if (periodDuration) {
         this.presentationDuration_ = periodDuration;
-      } else if (presentationType === 'dynamic') {
+      } else if (this.presentationType_ === StreamType.LIVE) {
         this.presentationDuration_ = Number.MAX_SAFE_INTEGER;
+      } else {
+        throw new Error('Could not determine presentation duration!');
       }
-    }
-
-    if (!this.presentationDuration_) {
-      throw new Error('Could not determine presentation duration!');
     }
 
     // TODO - Period might contain segment infos
@@ -177,13 +211,13 @@ export class ManifestParser implements IManifestParser {
     }
 
     const manifest: IManifest = {
-      type: presentationType === 'dynamic' ? StreamType.LIVE : StreamType.VOD,
+      type: this.presentationType_,
       startTime: presentationStartTime,
       delay: presentationDelay,
       duration: this.presentationDuration_,
       dvrWindowLength,
       minBufferTime,
-      minUpdatePeriod: minimumUpdatePeriod,
+      minUpdatePeriod: this.minimumUpdatePeriod_,
       maxSegmentDuration: this.maxSegmentDuration_,
       video: this.streamMap_.get(MediaType.VIDEO) || [],
       audio: this.streamMap_.get(MediaType.AUDIO) || [],
@@ -195,51 +229,72 @@ export class ManifestParser implements IManifestParser {
     return manifest;
   }
 
-  private parseAdaptationSet_(elem: Element): void {
-    const id = elem.getAttribute('id') || String(this.globalId_++);
+  private parseCommonAttributesAndElements_(
+    elem: Element
+  ): CommonAttributesAndElements {
+    const width = Number(elem.getAttribute('width')) || null;
+    const height = Number(elem.getAttribute('height')) || null;
+    const frameRate = Number(elem.getAttribute('frameRate')) || null;
     const mimeType = elem.getAttribute('mimeType') || '';
     const codecs = elem.getAttribute('codecs') || '';
-    const contentType =
-      elem.getAttribute('contentType') || Utils.getTypeFromMimeType(mimeType);
+    const samplingRate = Number(elem.getAttribute('samplingRate')) || null;
+
+    return {
+      width,
+      height,
+      frameRate,
+      mimeType,
+      codecs,
+      samplingRate,
+    };
+  }
+
+  private parseAdaptationSet_(elem: Element): void {
+    const id = elem.getAttribute('id') || String(this.globalId_++);
+    const common = this.parseCommonAttributesAndElements_(elem);
+    const codecs = common.codecs;
+    const maxHeight = Number(elem.getAttribute('maxHeight'));
+    const maxWidth = Number(elem.getAttribute('maxWidth'));
+    const maxFrameRate = Number(elem.getAttribute('maxFrameRate'));
+    const maxBandwidth = Number(elem.getAttribute('maxBandwidth'));
+    let contentType =
+      elem.getAttribute('contentType') ||
+      Utils.getTypeFromMimeType(common.mimeType);
     const segmentTemplate = Utils.getFirstChild(elem, 'SegmentTemplate');
     const segmentBase = Utils.getFirstChild(elem, 'SegmentBase');
     const segmentList = Utils.getFirstChild(elem, 'SegmentList');
-
-    // We only parse video and audio streams!
-    if (contentType !== MediaType.VIDEO && contentType !== MediaType.AUDIO) {
-      return;
-    }
 
     if (segmentBase || segmentList) {
       console.warn('Currently only SegmentTemplate is supported!');
       return;
     }
 
-    if (!segmentTemplate) {
-      console.error('No support for manifest type!');
-      throw new Error(
-        'Only DASH manifest with segment template are supported!'
-      );
-    }
-
-    if (this.streamMap_.has(contentType)) {
-      console.warn(
-        'Multiple adaptation sets for same content type is not supported...'
-      );
-      return;
-    }
+    const getSegmentNode = () => {
+      if (segmentTemplate) {
+        return {
+          node: segmentTemplate,
+          indexType: SegmentIndexType.Template,
+        };
+      }
+      return null;
+    };
 
     const representationNodes = Utils.getChildren(elem, 'Representation');
     const streams = [];
 
+    const context: AdaptationSetContext = {
+      id,
+      codecs,
+      contentType,
+      maxBandwidth,
+      maxFrameRate,
+      maxHeight,
+      maxWidth,
+      mimeType: common.mimeType,
+      segmentNode: getSegmentNode(),
+    };
+
     for (const representationNode of representationNodes) {
-      const context: AdaptationSetContext = {
-        id,
-        mimeType,
-        contentType,
-        codecs,
-        segmentTemplate,
-      };
       const parsed = this.parseRepresentation_(representationNode, context);
 
       if (parsed) {
@@ -254,7 +309,26 @@ export class ManifestParser implements IManifestParser {
       );
     }
 
-    this.streamMap_.set(contentType, streams);
+    // Derive content type in case attribute not present at adaptation set level
+    contentType = contentType || context.contentType;
+
+    console.assert(
+      contentType,
+      'Bug: Must have figured out content type by now.'
+    );
+
+    // We only support video and audio streams for now!
+    if (contentType === MediaType.AUDIO || contentType === MediaType.VIDEO) {
+      if (contentType && this.streamMap_.has(contentType)) {
+        console.warn(
+          'Multiple adaptation sets for same content type is not supported...'
+        );
+        return;
+      }
+      this.streamMap_.set(contentType, streams);
+    } else {
+      console.warn(`Skipping unsupported type: ${contentType}`);
+    }
   }
 
   private parseRepresentation_(
@@ -262,13 +336,44 @@ export class ManifestParser implements IManifestParser {
     context: AdaptationSetContext
   ): IRepresentation {
     const originalId = elem.getAttribute('id') || '';
+    const common = this.parseCommonAttributesAndElements_(elem);
     const bandwidth = Number(elem.getAttribute('bandwidth'));
-    const width = Number(elem.getAttribute('width'));
-    const height = Number(elem.getAttribute('height'));
-    const codecs = elem.getAttribute('codecs') || context.codecs;
+    const width = Number(elem.getAttribute('width')) || context.maxWidth;
+    const height = Number(elem.getAttribute('height')) || context.maxHeight;
+    const codecs = common.codecs || context.codecs;
+    const mimeType = common.mimeType || context.mimeType;
     const frameRate = Number(elem.getAttribute('frameRate'));
-    const segmentTemplate =
-      Utils.getFirstChild(elem, 'SegmentTemplate') || context.segmentTemplate;
+    let segmentTemplate = Utils.getFirstChild(elem, 'SegmentTemplate');
+    const segmentBase = Utils.getFirstChild(elem, 'SegmentBase');
+    const segmentList = Utils.getFirstChild(elem, 'SegmentList');
+
+    console.assert(
+      mimeType,
+      'mimeType attribute is mandatory for represensations.'
+    );
+
+    if (
+      context.segmentNode &&
+      context.segmentNode.indexType === SegmentIndexType.Template
+    ) {
+      segmentTemplate = segmentTemplate || context.segmentNode.node;
+    }
+
+    if (segmentBase || segmentList) {
+      console.warn('Currently only SegmentTemplate is supported!');
+      throw new Error('Unsupported segment index type.');
+    }
+
+    if (!segmentTemplate) {
+      console.error('No support for manifest type!');
+      throw new Error(
+        'Only DASH manifest with segment template are supported!'
+      );
+    }
+
+    if (!context.contentType) {
+      context.contentType = Utils.getTypeFromMimeType(mimeType);
+    }
 
     const rContext: RepresentationContext = {
       id: originalId,
@@ -298,7 +403,7 @@ export class ManifestParser implements IManifestParser {
       height,
       frameRate,
       codecs,
-      mimeType: context.mimeType,
+      mimeType,
       initialization: mediaData.initSegment,
       segmentIndex: new SegmentIndex(mediaData.mediaSegments),
     };
@@ -410,13 +515,14 @@ export class ManifestParser implements IManifestParser {
     elem: Element,
     context: MediaDataContext
   ): AllSegments {
-    // Section 5.3.9.6
+    // MPEG-DASH Section 5.3.9.6
     const sNodes = Utils.getChildren(elem, 'S');
     const mediaSegments: ISegment[] = [];
 
-    for (const sNode of sNodes) {
+    for (let i = 0; i < sNodes.length; i++) {
+      const sNode = sNodes[i];
       const d = Number(sNode.getAttribute('d'));
-      const r = Number(sNode.getAttribute('r'));
+      let r = Number(sNode.getAttribute('r'));
       let t = null;
       let scaledT = null;
       const scaledD = d / context.timescale;
@@ -424,6 +530,9 @@ export class ManifestParser implements IManifestParser {
       // TODO - Assert has duration
 
       if (sNode.hasAttribute('t')) {
+        // The value of the @t attribute minus the value of the
+        // @presentationTimeOffset specifies the MPD start time of the first
+        // Segment in the series.
         t = Number(sNode.getAttribute('t')) - context.timeOffset;
       } else if (mediaSegments.length === 0) {
         // If @t not present, then the value shall be assumed zero for the
@@ -466,8 +575,42 @@ export class ManifestParser implements IManifestParser {
         ),
       });
 
-      if (r < -1) {
-        console.warn('Negative repeat count not supported at the moment');
+      // The value of the @r attribute of the S element may be set to a
+      // negative value indicating that the duration indicated in @d is promised
+      // to repeat until the S@t of the next S element or if it is the
+      // last S element in the SegmentTimeline element until the end of the
+      // Period or the next update of the MPD, i.e. it is treated in the same
+      // way as the @duration attribute for a full period.
+      if (r < 0) {
+        console.assert(scaledT, 'Bug: Should scaled start time');
+
+        const nextS = sNodes[i + 1];
+        const isLastS = typeof nextS === 'undefined';
+        let endTime = -1;
+
+        if (isLastS) {
+          // TODO
+          // Pass period context. Currently we only support single period so,
+          // period duration is presentation duration
+          const periodEndTime = this.presentationDuration_ || t; //TODO
+          const nextUpdateTime = t + this.minimumUpdatePeriod_;
+          const isLive = this.presentationDuration_ === StreamType.LIVE;
+
+          endTime = isLive ? nextUpdateTime : periodEndTime;
+        } else {
+          if (nextS.hasAttribute('t')) {
+            endTime = Number(nextS.getAttribute('t')) - context.timeOffset;
+          } else {
+            throw new Error('Parser: next S element is missing @t attribute.');
+          }
+        }
+
+        console.assert(
+          endTime >= scaledT,
+          'Bug: could not compute segments for negative repeat count'
+        );
+
+        r = Math.ceil((endTime - scaledT) / scaledD);
       }
 
       if (r > 0) {
