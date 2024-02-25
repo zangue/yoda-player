@@ -62,3 +62,7 @@ License
 
 This software is being made available under the terms of the MIT license. Please
 refer to the LICENSE.md file within this directory.
+
+This software is greatly inspired by the Shaka Player architecture and borrow
+small code snippets from the project. The Shaka Player is subject to the terms
+of the Apache-2.0 license.

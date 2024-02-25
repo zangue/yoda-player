@@ -1,3 +1,9 @@
+/**
+ * This file contains adapted code from the Shaka Player which subject to the
+ * Apache 2.0 license terms. Find a copy of the license in the LICENSE.md file
+ * or visit https://www.apache.org/licenses/LICENSE-2.0.txt to obtain one.
+ */
+
 export type BufferedRange = {
   start: number;
   end: number;
