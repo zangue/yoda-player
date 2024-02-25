@@ -87,39 +87,40 @@ export class ParserUtils {
     identifiers: Partial<UrlTemplateIdentifier>,
     baseUrl?: string
   ): string {
+    // debugger;
     let resolvedTemplate = url;
 
     if (identifiers.representationId) {
       resolvedTemplate = resolvedTemplate.replace(
-        '$RepresentationID$',
+        /\$RepresentationID\$/g,
         String(identifiers.representationId)
       );
     }
 
     if (identifiers.number) {
       resolvedTemplate = resolvedTemplate.replace(
-        '$Number$',
+        /\$Number\$/g,
         String(identifiers.number)
       );
     }
 
     if (identifiers.subNumber) {
       resolvedTemplate = resolvedTemplate.replace(
-        '$SubNumber$',
+        /\$SubNumber\$/g,
         String(identifiers.number)
       );
     }
 
     if (identifiers.bandwidth) {
       resolvedTemplate = resolvedTemplate.replace(
-        '$Bandwidth$',
+        /\$Bandwidth\$/,
         String(identifiers.bandwidth)
       );
     }
 
     if (identifiers.time) {
       resolvedTemplate = resolvedTemplate.replace(
-        '$Time$',
+        /\$Time\$/g,
         String(identifiers.time)
       );
     }

@@ -457,7 +457,11 @@ export class ManifestParser implements IManifestParser {
         isInit: false,
         url: Utils.resolveTemplateUrl(
           context.mediaAttr, // url template
-          {bandwidth: context.representation.bandwidth, time: t},
+          {
+            bandwidth: context.representation.bandwidth,
+            time: t,
+            representationId: context.representation.id,
+          },
           this.manifestUrl_
         ),
       });
@@ -486,6 +490,7 @@ export class ManifestParser implements IManifestParser {
               {
                 bandwidth: context.representation.bandwidth,
                 time: nextStartUnscaled,
+                representationId: context.representation.id,
               },
               this.manifestUrl_
             ),
