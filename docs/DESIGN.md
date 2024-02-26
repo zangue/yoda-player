@@ -5,7 +5,7 @@ This document merely provides an overview of the implemented player design. It's
 ## Block Diagram
 The following block diagram shows a simplified overview of the main components and their relationships.
 
-![Player Architecture](/doc/plyr-arch.jpeg?raw=true "Player Architecture")
+![Player Architecture](/docs/plyr-arch.jpeg?raw=true "Player Architecture")
 
 ## Implementation details
 The player([`src/player/player.ts`](/src/player.ts)) is responsible of instantianting main
