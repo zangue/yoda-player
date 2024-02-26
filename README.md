@@ -6,6 +6,10 @@ be used for playback in web based environments that provide [HTML5 <video>](http
 
 Furthermore, the library currently relies on [DOMParser](https://html.spec.whatwg.org/multipage/dynamic-markup-insertion.html#dom-parsing-and-serialization) and [Document](https://developer.mozilla.org/en-US/docs/Web/API/Document#specifications) to parse XML.
 
+Design
+---
+An overview of of the player archicture and it's main component can be found [here.](/docs/DESIGN.md)
+
 Disclaimer
 ----
 This is an experimental project. Please, **DO NOT** use in any production environment! If you're looking for an open-source, production ready media player I recommend you consider following projects instead:
@@ -13,6 +17,24 @@ This is an experimental project. Please, **DO NOT** use in any production enviro
 - [dash.js](https://github.com/Dash-Industry-Forum/dash.js)
 - [hls.js](https://github.com/video-dev/hls.js)
 - [RxPlayer](https://github.com/canalplus/rx-player)
+
+MPEG-DASH features
+---
+Supported:
+* VoD & Live (static and dynamic manifests)
+* timeShiftBufferDepth
+* suggestedPresentationDelay
+* Segment index:
+  * SegmentTemplate (VoD only)
+  * SegmentTemplate+Timeline
+
+Not Supported:
+* Multi-period
+* Multi-codecs
+* SegmentBase & SegmentList
+* ContentProtection (DRM)
+* Text
+* and more...
 
 Getting started
 -----
