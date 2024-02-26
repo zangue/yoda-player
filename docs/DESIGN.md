@@ -12,7 +12,7 @@ The player([`src/player.ts`](/src/player.ts)) is responsible of instantianting m
 components and providing all required resources (e.g. the media element) needed
 to setup playback.
 
-The Parser ([`src/dash/manifest-parser.ts`](src/dash/manifest-parser.ts)) is responsible of parsing the
+The Parser ([`src/dash/manifest-parser.ts`](/src/dash/manifest-parser.ts)) is responsible of parsing the
 manifest and providing the player with the parsed manifest model ([`IManifest`](/src/dash/types.ts)).
 Furthermore, it's also responsible of autonomously refreshing a live manifest
 and update the segment index ([`src/dash/segment-index.ts`](/src/dash/segment-index.ts)) with newly
