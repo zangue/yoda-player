@@ -21,7 +21,7 @@
       <section id="preview">
         <form>
           <div>
-            <input id="streamInput" type="url" name="streamUrl" placeholder="MPEG-DASH Stream URL" aria-label="MPEG-DASH Stream URL" required>
+            <input id="streamInput" type="url" name="streamUrl" placeholder="MPEG-DASH Stream URL" aria-label="MPEG-DASH Stream URL" value="https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd" required>
             <button id="loadButton" type="submit">Load</button>
           </div>
         </form>
@@ -36,7 +36,7 @@
       <small>Built by <a target="_blank" href="https://linkedin.com/in/zangue">Armand Zangue</a> • <a target="_blank" href="https://github.com/zangue/yoda-player">Source code</a></small>
     </footer><!-- ./ Footer -->
 
-    <script src="./js/yoda-player.js"></script>
+    <script src="./js/yoda-player.bundle.js"></script>
     <script>
       let player;
       var mediaElement = document.getElementById('video');

@@ -51,6 +51,14 @@ npm install
 npm run build
 ```
 
+Demo page:
+
+```
+npm run serve
+```
+
+Navigate to http://localhost:9000/ (currently only tested in Chrome browser)
+
 Basic Usage
 -----------
 This is an example of how you can embed Yoda Player into your HTML page.
